@@ -1,0 +1,44 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="glass-panel">
+            <h2 class="mb-4">Bulk Resume Screening</h2>
+            <p class="text-secondary-c mb-4">
+                Select a <strong>local folder</strong> containing resumes (PDFs/DOCXs).
+                The system will automatically upload and screen all valid files found in the folder.
+            </p>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="mb-4">
+                    <label class="form-label text-secondary-c small fw-bold text-uppercase">{{ form.job.label }}</label>
+                    <div class="input-group">
+                        <select name="{{ form.job.name }}" class="form-select bg-dark text-white border-secondary p-3"
+                            required>
+                            {% for choice in form.job.field.queryset %}
+                            <option value="{{ choice.pk }}">{{ choice.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-secondary-c small fw-bold text-uppercase">RESUMES</label>
+                    <div class="input-group">
+                        <input type="file" name="resumes" class="form-control bg-dark text-white border-secondary"
+                            webkitdirectory directory multiple required>
+                    </div>
+                    <div class="form-text text-secondary-c mt-2">Select a local FOLDER containing resumes (PDF/DOCX)
+                    </div>
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Start Batch Screening</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

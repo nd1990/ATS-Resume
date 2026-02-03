@@ -1,0 +1,39 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="glass-panel">
+            <h2 class="mb-4">Upload Resume</h2>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% for field in form %}
+                <div class="mb-4">
+                    <label class="form-label text-secondary-c small fw-bold text-uppercase">{{ field.label }}</label>
+                    <div class="input-group">
+                        {% if field.name == 'file' %}
+                        <input type="file" name="{{ field.name }}"
+                            class="form-control bg-dark text-white border-secondary" required>
+                        {% else %}
+                        <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}"
+                            class="form-control bg-dark text-white border-secondary p-3"
+                            value="{{ field.value|default:'' }}">
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div class="alert alert-info border-0 bg-opacity-10 bg-info text-info">
+                    <small>Supported formats: PDF, DOCX. Uploading triggers automatic AI screening against all active
+                        jobs.</small>
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Analyze Resume</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

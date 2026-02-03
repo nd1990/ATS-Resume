@@ -1,0 +1,76 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-5">
+    <h2 class="mb-0">Candidate Dashboard</h2>
+    <div class="d-flex gap-2">
+        <form action="{% url 'clear_all_resumes' %}" method="post"
+            onsubmit="return confirm('Are you sure you want to delete ALL resumes? This cannot be undone.');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger">Clear All Data</button>
+        </form>
+        <a href="{% url 'upload_resume' %}" class="btn btn-primary">Upload New Resume</a>
+    </div>
+</div>
+
+<div class="card bg-transparent border-0">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0" style="background-color: transparent;">
+            <thead class="bg-card-bg">
+                <tr>
+                    <th class="py-3 ps-4 rounded-start">Candidate</th>
+                    <th class="py-3">Job Applied</th>
+                    <th class="py-3">Match Score</th>
+                    <th class="py-3">Status</th>
+                    <th class="py-3">Date</th>
+                    <th class="py-3 pe-4 rounded-end text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for score in scores %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="fw-bold text-white">{{ score.resume.candidate_name|default:"Unknown Candidate" }}
+                        </div>
+                        <small class="text-secondary-c">{{ score.resume.email|default:"No email" }}</small>
+                    </td>
+                    <td>{{ score.job.title }}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="progress flex-grow-1 me-3"
+                                style="height: 6px; width: 100px; background-color: rgba(255,255,255,0.1);">
+                                <div class="progress-bar {% if score.match_percentage >= 45 %}bg-success{% else %}bg-danger{% endif %}"
+                                    role="progressbar" style="width: {{ score.match_percentage }}%"></div>
+                            </div>
+                            <span
+                                class="fw-bold {% if score.match_percentage >= 45 %}text-success{% else %}text-danger{% endif %}">
+                                {{ score.match_percentage|floatformat:0 }}%
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge rounded-pill px-3 py-2 
+                            {% if score.classification == 'SHORTLISTED' %}badge-shortlisted
+                            {% elif score.classification == 'MAYBE' %}badge-maybe
+                            {% else %}badge-rejected{% endif %}">
+                            {{ score.classification|title }}
+                        </span>
+                    </td>
+                    <td class="text-secondary-c">{{ score.created_at|date:"M d" }}</td>
+                    <td class="text-end pe-4">
+                        <a href="{% url 'resume_detail' pk=score.pk %}" class="btn btn-sm btn-outline-light">View
+                            Analysis</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-secondary-c">
+                        No screenings found. Upload a resume to get started.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

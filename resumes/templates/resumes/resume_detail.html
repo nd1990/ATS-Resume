@@ -1,0 +1,111 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card p-4 h-100">
+            <div class="text-center mb-4">
+                <div
+                    class="display-1 fw-bold mb-0 {% if score.match_percentage >= 45 %}text-success{% else %}text-danger{% endif %}">
+                    {{ score.match_percentage|floatformat:0 }}<span class="fs-4">%</span>
+                </div>
+                <div class="text-secondary-c text-uppercase small fw-bold tracking-wider">Overall Match</div>
+            </div>
+
+            <hr class="border-secondary my-4">
+
+            <div class="mb-4">
+                <label class="text-secondary-c small fw-bold mb-2">CANDIDATE</label>
+                <div class="fs-5 fw-bold">{{ score.resume.candidate_name|default:"Unknown" }}</div>
+                <div class="text-secondary-c">{{ score.resume.email }}</div>
+            </div>
+
+            <div class="mb-4">
+                <label class="text-secondary-c small fw-bold mb-2">JOB APPLIED</label>
+                <div class="fs-5 fw-bold text-accent">{{ score.job.title }}</div>
+            </div>
+
+            <div class="mb-4">
+                <label class="text-secondary-c small fw-bold mb-2">STATUS</label>
+                <div>
+                    <span class="badge rounded-pill px-3 py-2 fs-6 w-100
+                        {% if score.classification == 'SHORTLISTED' %}badge-shortlisted
+                        {% elif score.classification == 'MAYBE' %}badge-maybe
+                        {% else %}badge-rejected{% endif %}">
+                        {{ score.classification|title }}
+                    </span>
+                </div>
+            </div>
+
+            <a href="{{ score.resume.file.url }}" target="_blank" class="btn btn-outline-light w-100 mt-auto">Download
+                Original Resume</a>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="glass-panel h-100">
+            <h3 class="mb-4">AI Analysis Report</h3>
+
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="p-3 rounded bg-dark border border-secondary">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-secondary-c small fw-bold">SEMANTIC RELEVANCE</span>
+                            <span class="text-primary fw-bold">{{ score.ai_explanation|slice:"16:18" }}%</span>
+                            <!-- Hacky parsing for demo, better to store in model -->
+                        </div>
+                        <div class="progress" style="height: 4px;">
+                            <div class="progress-bar bg-primary" style="width: {{ score.ai_explanation|slice:" 16:18"
+                                }}%"></div>
+                        </div>
+                        <p class="small text-secondary-c mt-2 mb-0">How well the resume context matches the job
+                            description.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 rounded bg-dark border border-secondary">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-secondary-c small fw-bold">SKILLS MATCH</span>
+                            <span class="text-info fw-bold">{{ score.skill_match_score|floatformat:0 }}%</span>
+                        </div>
+                        <div class="progress" style="height: 4px;">
+                            <div class="progress-bar bg-info" style="width: {{ score.skill_match_score }}%"></div>
+                        </div>
+                        <p class="small text-secondary-c mt-2 mb-0">Percentage of required hard skills found.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-5">
+                <h5 class="mb-3 text-success">✅ Matched Skills</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for skill in score.matched_skills %}
+                    <span class="badge bg-dark border border-success text-success p-2 px-3">{{ skill }}</span>
+                    {% empty %}
+                    <span class="text-secondary-c fst-italic">No specific skills matched.</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="mb-5">
+                <h5 class="mb-3 text-danger">❌ Missing Skills</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for skill in score.missing_skills %}
+                    <span class="badge bg-dark border border-danger text-danger p-2 px-3">{{ skill }}</span>
+                    {% empty %}
+                    <span class="text-secondary-c fst-italic">No missing skills detected!</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div>
+                <h5 class="mb-3 text-white">📝 AI Explanation</h5>
+                <div class="p-4 rounded bg-dark border border-secondary">
+                    <p class="mb-0 text-secondary-c">{{ score.ai_explanation }}</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

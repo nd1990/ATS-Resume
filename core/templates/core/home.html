@@ -1,0 +1,278 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* SaaS Hero Section */
+    .saas-hero {
+        padding: 6rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-glow {
+        position: absolute;
+        top: -20%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(15, 23, 42, 0) 70%);
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    .hero-title-saas {
+        font-size: 3.5rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-subtitle-saas {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        font-weight: 400;
+        margin-bottom: 2.5rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Logo Strip */
+    .logo-strip {
+        opacity: 0.5;
+        filter: grayscale(100%);
+        transition: opacity 0.3s;
+    }
+
+    .logo-strip:hover {
+        opacity: 0.8;
+    }
+
+    /* Comparison Section */
+    .comparison-section {
+        background: rgba(30, 41, 59, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 5rem 0;
+    }
+
+    .comparison-card {
+        padding: 2rem;
+        border-radius: 16px;
+        height: 100%;
+    }
+
+    .comparison-card.old {
+        background: rgba(239, 68, 68, 0.05);
+        border: 1px dashed rgba(239, 68, 68, 0.2);
+    }
+
+    .comparison-card.new {
+        background: rgba(16, 185, 129, 0.05);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    /* Feature Grid */
+    .feature-icon-box {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(56, 189, 248, 0.1);
+        color: var(--accent);
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+    }
+
+    .step-number {
+        font-size: 4rem;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.03);
+        line-height: 1;
+        position: absolute;
+        top: 0;
+        right: 1rem;
+    }
+
+    /* CTA Section */
+    .cta-box {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 1) 0%, rgba(15, 23, 42, 1) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 4rem 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cta-decoration {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: var(--accent);
+        filter: blur(100px);
+        opacity: 0.1;
+        border-radius: 50%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="saas-hero text-center">
+    <div class="hero-glow"></div>
+    <div class="container">
+        <span class="badge rounded-pill border border-secondary border-opacity-25 text-secondary mb-4 px-3 py-2">
+            ✨ AI Resume Intelligence v2.0
+        </span>
+        <h1 class="hero-title-saas">
+            Recruit at the <br>
+            <span
+                style="background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Speed
+                of AI</span>
+        </h1>
+        <p class="hero-subtitle-saas">
+            Automate manual screening, eliminate bias, and identify top talent instantly.
+            The intelligent ATS that works as hard as you do.
+        </p>
+        <div class="d-flex justify-content-center gap-3 mb-5">
+            <a href="{% url 'upload_resume' %}" class="btn btn-primary btn-lg px-5 shadow-lg">Start Free Trial</a>
+            <a href="{% url 'job_create' %}" class="btn btn-outline-light btn-lg px-5">Watch Demo</a>
+        </div>
+
+        <p class="small text-secondary mb-4">Trusted by recruiting teams at</p>
+        <div class="d-flex justify-content-center gap-5 logo-strip">
+            <h5 class="text-secondary opacity-50 fw-bold">ACME Corp</h5>
+            <h5 class="text-secondary opacity-50 fw-bold">GlobalTech</h5>
+            <h5 class="text-secondary opacity-50 fw-bold">Nebula</h5>
+            <h5 class="text-secondary opacity-50 fw-bold">Vertex</h5>
+        </div>
+    </div>
+</section>
+
+<!-- Problem vs Solution -->
+<section class="comparison-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="comparison-card old">
+                    <h4 class="text-danger mb-4">🚫 The Old Way</h4>
+                    <ul class="list-unstyled text-secondary d-flex flex-column gap-3">
+                        <li class="d-flex align-items-center gap-2">
+                            <span class="text-danger opacity-50">✕</span> Hours spent reading resumes manually
+                        </li>
+                        <li class="d-flex align-items-center gap-2">
+                            <span class="text-danger opacity-50">✕</span> Unconscious bias in screening
+                        </li>
+                        <li class="d-flex align-items-center gap-2">
+                            <span class="text-danger opacity-50">✕</span> Keyword stuffing tricks ATS
+                        </li>
+                        <li class="d-flex align-items-center gap-2">
+                            <span class="text-danger opacity-50">✕</span> Slow feedback loop for candidates
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="comparison-card new">
+                    <h4 class="text-success mb-4">✅ The AI Way</h4>
+                    <ul class="list-unstyled text-secondary d-flex flex-column gap-3">
+                        <li class="d-flex align-items-center gap-2">
+                            <span class="text-success">✓</span> Instant ranking based on skills & context
+                        </li>
+                        <li class="d-flex align-items-center gap-2">
+                            <span class="text-success">✓</span> Objective, data-driven scoring
+                        </li>
+                        <li class="d-flex align-items-center gap-2">
+                            <span class="text-success">✓</span> Semantic understanding of qualifications
+                        </li>
+                        <li class="d-flex align-items-center gap-2">
+                            <span class="text-success">✓</span> Shortlist top 10% in seconds
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Grid -->
+<section class="py-5 my-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-6 fw-bold mb-3">Everything you need to hire</h2>
+            <p class="text-secondary">Powerful features designed for modern recruitment teams.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border-0 bg-dark position-relative overflow-hidden group">
+                    <div class="step-number">01</div>
+                    <div class="feature-icon-box">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <h4 class="mb-3">Smart Parsing</h4>
+                    <p class="text-secondary mb-0">Drag and drop bulk resumes. We extract contact info, skills, and work
+                        history automatically, supporting PDF and DOCX formats.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border-0 bg-dark position-relative overflow-hidden">
+                    <div class="step-number">02</div>
+                    <div class="feature-icon-box">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </div>
+                    <h4 class="mb-3">Contextual Matching</h4>
+                    <p class="text-secondary mb-0">Our NLP engine understands that "React" and "ReactJS" are the same,
+                        and weights experience relevance over buzzwords.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border-0 bg-dark position-relative overflow-hidden">
+                    <div class="step-number">03</div>
+                    <div class="feature-icon-box">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <path d="M22 4L12 14.01l-3-3"></path>
+                        </svg>
+                    </div>
+                    <h4 class="mb-3">Automated Shortlisting</h4>
+                    <p class="text-secondary mb-0">Get a ranked list of candidates classified as "Shortlisted", "Maybe",
+                        or "Rejected" instantly. Focus only on the best.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Final CTA -->
+<section class="container pb-5">
+    <div class="cta-box text-center">
+        <div class="cta-decoration" style="top: -50px; left: -50px;"></div>
+        <div class="cta-decoration" style="bottom: -50px; right: -50px; background: var(--success);"></div>
+
+        <div class="position-relative z-1">
+            <h2 class="display-5 fw-bold mb-4">Ready to transform your hiring?</h2>
+            <p class="lead text-secondary mb-5">Join the future of recruitment. No credit card required.</p>
+            <a href="{% url 'upload_resume' %}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill">Get Started for
+                Free</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
