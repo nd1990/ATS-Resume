@@ -66,8 +66,8 @@ def bulk_upload(request):
             
             for f in files:
                 try:
-                    # Filter only PDF/DOCX
-                    if not f.name.lower().endswith(('.pdf', '.docx')):
+                    # Filter supported files
+                    if not f.name.lower().endswith(('.pdf', '.docx', '.jpg', '.jpeg', '.png')):
                         continue
                         
                     # Create Resume object

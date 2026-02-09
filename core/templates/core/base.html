@@ -160,14 +160,27 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Product</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'pricing' %}">Pricing</a></li>
+                    {% if user.is_authenticated %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'job_list' %}">Open Roles</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'upload_resume' %}">For Candidates</a></li>
+                    {% endif %}
                 </ul>
                 <div class="d-flex gap-2">
+                    {% if user.is_authenticated %}
                     <a class="btn btn-outline-light rounded-pill px-4" href="{% url 'bulk_upload' %}">Bulk Upload</a>
                     <a class="btn btn-outline-light rounded-pill px-4" href="{% url 'resume_list' %}">Dashboard</a>
                     <a class="btn btn-primary rounded-pill px-4 text-white hover-lift"
                         href="{% url 'job_create' %}">Post Job</a>
+                    <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link text-secondary text-decoration-none">Logout</button>
+                    </form>
+                    {% else %}
+                    <a class="btn btn-link text-secondary text-decoration-none" href="{% url 'login' %}">Sign In</a>
+                    <a class="btn btn-primary rounded-pill px-4 text-white hover-lift" href="{% url 'signup' %}">Sign
+                        Up</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
