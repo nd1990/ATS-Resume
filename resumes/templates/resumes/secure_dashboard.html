@@ -1,0 +1,129 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-5">
+    <h2 class="mb-0">Secure Submissions Dashboard</h2>
+    <a href="{% url 'upload_profile' %}" class="btn btn-primary">Upload New Profile</a>
+</div>
+
+<div class="card bg-transparent border-0">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0" style="background-color: transparent;">
+            <thead class="bg-card-bg">
+                <tr>
+                    <th class="py-3 ps-4 rounded-start">Candidate</th>
+                    <th class="py-3">Status</th>
+                    <th class="py-3">Uploaded By</th>
+                    <th class="py-3">Assigned To</th>
+                    <th class="py-3">Last Updated</th>
+                    <th class="py-3 pe-4 rounded-end text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for profile in profiles %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="fw-bold text-white">{{ profile.candidate_name }}</div>
+                        <small class="text-secondary-c">{{ profile.email }}</small>
+                    </td>
+                    <td>
+                        <span class="badge rounded-pill px-3 py-2 
+                            {% if profile.current_status == 'SUBMITTED' %}bg-primary
+                            {% elif profile.current_status == 'UNDER_REVIEW' %}bg-info
+                            {% elif profile.current_status == 'COMPLIANCE_PENDING' %}bg-warning
+                            {% elif profile.current_status == 'EVALUATED' %}bg-success
+                            {% else %}bg-secondary{% endif %}">
+                            {{ profile.get_current_status_display }}
+                        </span>
+                    </td>
+                    <td class="text-secondary-c">{{ profile.created_by.username }}</td>
+                    <td class="text-secondary-c">{{ profile.assigned_to.username|default:"-" }}</td>
+                    <td class="text-secondary-c">{{ profile.updated_at|date:"M d, Y" }}</td>
+                    <td class="text-end pe-4">
+                        <a href="{% url 'profile_detail' pk=profile.pk %}" class="btn btn-sm btn-outline-light">View
+                            Timeline</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-secondary-c">
+                        No submissions found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-6 mb-4">
+        <div class="card bg-card-bg shadow-sm h-100">
+            <div class="card-body">
+                <h4 class="card-title mb-3">On-the-fly JD & Resume Analysis</h4>
+                <p class="text-secondary-c small mb-3">
+                    Paste a job description and candidate resume to generate a quick AI-driven match summary.
+                </p>
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ analysis_form.job_description.label_tag }}
+                        {{ analysis_form.job_description }}
+                    </div>
+                    <div class="mb-3">
+                        {{ analysis_form.candidate_resume.label_tag }}
+                        {{ analysis_form.candidate_resume }}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Run Analysis</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        {% if analysis_result %}
+        <div class="card bg-card-bg shadow-sm h-100">
+            <div class="card-body">
+                <h4 class="card-title mb-3">Analysis Result</h4>
+                <ul class="list-unstyled mb-3">
+                    <li class="mb-2"><strong>Skill Match Percentage:</strong> {{ analysis_result.skill_match_percentage }}%</li>
+                    <li class="mb-2"><strong>Experience Match Score:</strong> {{ analysis_result.experience_match_score }}% </li>
+                    <li class="mb-2 text-secondary-c small">{{ analysis_result.experience_notes }}</li>
+                    <li class="mb-2"><strong>Certification Validity Status:</strong> {{ analysis_result.certification_status }}</li>
+                    <li class="mb-2 text-secondary-c small">{{ analysis_result.certification_details }}</li>
+                    <li class="mb-2"><strong>Compliance Issues:</strong></li>
+                </ul>
+                <ul class="text-secondary-c small">
+                    {% if analysis_result.compliance_issues %}
+                        {% for issue in analysis_result.compliance_issues %}
+                        <li>{{ issue }}</li>
+                        {% endfor %}
+                    {% else %}
+                        <li>No major compliance gaps detected.</li>
+                    {% endif %}
+                </ul>
+                <h6 class="mt-3"><strong>Risk Flags</strong></h6>
+                <ul class="text-secondary-c small">
+                    {% if analysis_result.risk_flags %}
+                        {% for flag in analysis_result.risk_flags %}
+                        <li>{{ flag }}</li>
+                        {% endfor %}
+                    {% else %}
+                        <li>No explicit risk indicators found in the resume.</li>
+                    {% endif %}
+                </ul>
+                <hr>
+                <p class="mb-1"><strong>Final Weighted Score (0-100):</strong> {{ analysis_result.final_weighted_score }}</p>
+                <p class="mb-0"><strong>Recommendation:</strong> {{ analysis_result.recommendation }}</p>
+            </div>
+        </div>
+        {% else %}
+        <div class="card bg-card-bg shadow-sm h-100 d-flex align-items-center justify-content-center">
+            <div class="card-body text-center text-secondary-c">
+                <p class="mb-0">Run an analysis to see skill match, experience, certifications, compliance, risk flags, and a final recommendation here.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

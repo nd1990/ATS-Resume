@@ -1,14 +1,47 @@
 from django import forms
-from .models import Resume
+from .models import Resume, CandidateProfile, ProfileVersion
 from jobs.models import JobRequirement
+
 
 class ResumeUploadForm(forms.ModelForm):
     class Meta:
         model = Resume
-        fields = ['file', 'candidate_name', 'email']
+        fields = ['file']
+
 
 class BulkUploadForm(forms.Form):
-    job = forms.ModelChoiceField(queryset=JobRequirement.objects.all(), help_text="Select the Job to screen these resumes for")
+    job = forms.ModelChoiceField(
+        queryset=JobRequirement.objects.all(),
+        label="Select Job Role",
+        help_text="Resumes will be screened against this job.",
+        empty_label="-- Select a Job --"
+    )
+    # Note: Multiple file input is handled directly in the template HTML.
+    # Django's FileField validates a single file; the view reads all
+    # uploaded files via request.FILES.getlist('resumes').
 
 
+class SecureProfileUploadForm(forms.ModelForm):
+    file = forms.FileField(label="Resume File (PDF/DOCX)")
+
+    class Meta:
+        model = CandidateProfile
+        fields = ['candidate_name', 'email']
+
+
+class CandidateStatusUpdateForm(forms.ModelForm):
+    class Meta:
+        model = CandidateProfile
+        fields = ['current_status']
+
+
+class JDResumeAnalysisForm(forms.Form):
+    job_description = forms.CharField(
+        label="Job Description",
+        widget=forms.Textarea(attrs={"rows": 6, "placeholder": "Paste the job description here"})
+    )
+    candidate_resume = forms.CharField(
+        label="Candidate Resume",
+        widget=forms.Textarea(attrs={"rows": 6, "placeholder": "Paste the candidate resume here"})
+    )
 
