@@ -38,10 +38,24 @@ class CandidateStatusUpdateForm(forms.ModelForm):
 class JDResumeAnalysisForm(forms.Form):
     job_description = forms.CharField(
         label="Job Description",
-        widget=forms.Textarea(attrs={"rows": 6, "placeholder": "Paste the job description here"})
+        widget=forms.Textarea(
+            attrs={
+                "rows": 6,
+                "placeholder": "Paste the job description here",
+                "class": "form-control bg-card-bg text-white",
+                "style": "resize: vertical;",
+            }
+        ),
     )
     candidate_resume = forms.CharField(
-        label="Candidate Resume",
-        widget=forms.Textarea(attrs={"rows": 6, "placeholder": "Paste the candidate resume here"})
+        label="Candidate Resume (Updated)",
+        widget=forms.Textarea(
+            attrs={
+                "rows": 6,
+                "placeholder": "Paste the candidate’s updated resume here",
+                "class": "form-control bg-card-bg text-white",
+                "style": "resize: vertical;",
+            }
+        ),
     )
 

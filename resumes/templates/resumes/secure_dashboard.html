@@ -60,18 +60,21 @@
     <div class="col-md-6 mb-4">
         <div class="card bg-card-bg shadow-sm h-100">
             <div class="card-body">
-                <h4 class="card-title mb-3">On-the-fly JD & Resume Analysis</h4>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="card-title mb-0">On-the-fly JD &amp; Resume Analysis</h4>
+                    <span class="badge bg-primary bg-gradient">AI Match</span>
+                </div>
                 <p class="text-secondary-c small mb-3">
-                    Paste a job description and candidate resume to generate a quick AI-driven match summary.
+                    Paste the job description and the candidate’s updated resume to generate a detailed AI-driven match summary.
                 </p>
-                <form method="post" novalidate>
+                <form method="post" novalidate class="mt-2">
                     {% csrf_token %}
                     <div class="mb-3">
-                        {{ analysis_form.job_description.label_tag }}
+                        <label class="form-label">{{ analysis_form.job_description.label }}</label>
                         {{ analysis_form.job_description }}
                     </div>
                     <div class="mb-3">
-                        {{ analysis_form.candidate_resume.label_tag }}
+                        <label class="form-label">{{ analysis_form.candidate_resume.label }}</label>
                         {{ analysis_form.candidate_resume }}
                     </div>
                     <button type="submit" class="btn btn-primary w-100">Run Analysis</button>
@@ -84,12 +87,50 @@
         {% if analysis_result %}
         <div class="card bg-card-bg shadow-sm h-100">
             <div class="card-body">
-                <h4 class="card-title mb-3">Analysis Result</h4>
-                <ul class="list-unstyled mb-3">
-                    <li class="mb-2"><strong>Skill Match Percentage:</strong> {{ analysis_result.skill_match_percentage }}%</li>
-                    <li class="mb-2"><strong>Experience Match Score:</strong> {{ analysis_result.experience_match_score }}% </li>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="card-title mb-0">Analysis Result</h4>
+                    <span class="badge 
+                        {% if analysis_result.recommendation == 'Hire' %}bg-success
+                        {% elif analysis_result.recommendation == 'Hold' %}bg-warning
+                        {% else %}bg-danger{% endif %}">
+                        {{ analysis_result.recommendation }}
+                    </span>
+                </div>
+                <p class="text-secondary-c small mb-3">
+                    Weighted view across skills, experience, certifications, compliance and risk.
+                </p>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-secondary-c small">Final Weighted Score</span>
+                        <span class="fw-bold text-white">{{ analysis_result.final_weighted_score }}</span>
+                    </div>
+                    <div class="progress bg-dark" style="height: 6px;">
+                        <div class="progress-bar 
+                            {% if analysis_result.final_weighted_score|floatformat >= 80 %}bg-success
+                            {% elif analysis_result.final_weighted_score|floatformat >= 55 %}bg-warning
+                            {% else %}bg-danger{% endif %}"
+                            role="progressbar"
+                            style="width: {{ analysis_result.final_weighted_score }}%;"
+                            aria-valuenow="{{ analysis_result.final_weighted_score }}"
+                            aria-valuemin="0"
+                            aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+                <ul class="list-unstyled mb-3 mt-3">
+                    <li class="mb-2">
+                        <strong>Skill Match:</strong>
+                        <span class="text-accent">{{ analysis_result.skill_match_percentage }}%</span>
+                    </li>
+                    <li class="mb-2">
+                        <strong>Experience Match:</strong>
+                        <span class="text-accent">{{ analysis_result.experience_match_score }}%</span>
+                    </li>
                     <li class="mb-2 text-secondary-c small">{{ analysis_result.experience_notes }}</li>
-                    <li class="mb-2"><strong>Certification Validity Status:</strong> {{ analysis_result.certification_status }}</li>
+                    <li class="mb-2">
+                        <strong>Certification Status:</strong>
+                        <span class="text-secondary-c">{{ analysis_result.certification_status }}</span>
+                    </li>
                     <li class="mb-2 text-secondary-c small">{{ analysis_result.certification_details }}</li>
                     <li class="mb-2"><strong>Compliance Issues:</strong></li>
                 </ul>
