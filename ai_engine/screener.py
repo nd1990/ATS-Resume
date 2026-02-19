@@ -8,15 +8,27 @@ _model = None
 _use_fallback = False
 
 def get_nlp():
+    """
+    Returns a spaCy NLP object.
+    - Tries to load 'en_core_web_sm'
+    - If unavailable and download fails, falls back to a lightweight blank English pipeline
+      so the app never crashes just because the model isn't installed.
+    """
     global _nlp
     if _nlp is None:
         try:
             _nlp = spacy.load("en_core_web_sm")
-        except OSError:
-            # Fallback if model not found, though it should be downloaded
-            import subprocess
-            subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
-            _nlp = spacy.load("en_core_web_sm")
+        except Exception:
+            try:
+                import subprocess
+                subprocess.run(
+                    ["python", "-m", "spacy", "download", "en_core_web_sm"],
+                    check=False,
+                )
+                _nlp = spacy.load("en_core_web_sm")
+            except Exception:
+                # Last-resort fallback: simple tokenizer-only pipeline
+                _nlp = spacy.blank("en")
     return _nlp
 
 def get_model():
@@ -37,14 +49,17 @@ def get_model():
 
 def extract_keywords(text):
     """
-    Extracts potential keywords (NOUN, PROPN) from text using spaCy.
+    Extracts potential keywords from text using spaCy.
+    Works with both full models and the blank fallback by relying only on
+    tokenization, alpha filtering, and simple length heuristics.
     """
     nlp = get_nlp()
-    doc = nlp(text)
+    doc = nlp(text or "")
     keywords = set()
     for token in doc:
-        if token.pos_ in ['NOUN', 'PROPN'] and not token.is_stop and token.is_alpha:
-            keywords.add(token.lemma_.lower())
+        if token.is_alpha and len(token.text) > 2:
+            lemma = token.lemma_.lower() if token.lemma_ else token.text.lower()
+            keywords.add(lemma)
     return list(keywords)
 
 def calculate_semantic_similarity(text1, text2):
@@ -112,12 +127,22 @@ def calculate_resume_score(resume_text, job_description, required_skills, weight
         
     final_score = (semantic_score * weights['semantic']) + (skill_score * weights['skills'])
     
-    # Classification
-    # Classification
-    if final_score >= 45:
+    # Three-tier classification
+    if final_score >= 65:
         classification = 'SHORTLISTED'
+    elif final_score >= 40:
+        classification = 'MAYBE'
     else:
         classification = 'REJECTED'
+
+    skill_count = len(matched)
+    total_skill_count = len(matched) + len(missing)
+    explanation = (
+        f"The resume achieved an overall match score of {round(final_score, 1)}%. "
+        f"Semantic relevance to the job description: {round(semantic_score, 1)}%. "
+        f"Skills matched: {skill_count} out of {total_skill_count} required skills ({round(skill_score, 1)}%). "
+        f"Classification: {classification.title()}."
+    )
 
     return {
         'final_score': round(final_score, 2),
@@ -125,5 +150,6 @@ def calculate_resume_score(resume_text, job_description, required_skills, weight
         'skill_score': round(skill_score, 2),
         'matched_skills': matched,
         'missing_skills': missing,
-        'classification': classification
+        'classification': classification,
+        'ai_explanation': explanation,
     }
