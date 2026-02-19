@@ -126,3 +126,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Authentication Redirects
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
+
+# Security
+ENCRYPTION_KEY = b'WA6lRA1Hh6uoDMJBOMWqJp6ByAZ3y1O7u_H1EwaPQwI='
+

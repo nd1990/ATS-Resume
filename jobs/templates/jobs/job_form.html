@@ -1,48 +1,190 @@
 {% extends 'core/base.html' %}
 
+{% block extra_css %}
+<style>
+    .form-section {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        padding: 1.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-section-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .form-control,
+    .form-select {
+        background-color: rgba(15, 23, 42, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: var(--text-primary) !important;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15) !important;
+        outline: none;
+    }
+
+    .form-control::placeholder {
+        color: rgba(148, 163, 184, 0.4) !important;
+    }
+
+    .form-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-text {
+        font-size: 0.78rem;
+        color: rgba(148, 163, 184, 0.6);
+        margin-top: 0.4rem;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--accent);
+        border-color: var(--accent);
+    }
+
+    .errorlist {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 0.5rem;
+        color: var(--danger);
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="glass-panel">
-            <h2 class="mb-4">Create New Job Requirement</h2>
-            <form method="post">
-                {% csrf_token %}
-
-                {% for field in form %}
-                <div class="mb-4">
-                    <label class="form-label text-secondary-c small fw-bold text-uppercase">{{ field.label }}</label>
-                    <div class="input-group">
-                        {{ field.errors }}
-                    </div>
-                    {% if field.name == 'title' %}
-                    <input type="text" name="{{ field.name }}"
-                        class="form-control bg-dark text-white border-secondary p-3"
-                        value="{{ field.value|default:'' }}" required>
-                    {% elif field.name == 'description' %}
-                    <textarea name="{{ field.name }}" class="form-control bg-dark text-white border-secondary p-3"
-                        rows="5" required>{{ field.value|default:'' }}</textarea>
-                    {% elif field.name == 'experience_years' %}
-                    <input type="number" name="{{ field.name }}"
-                        class="form-control bg-dark text-white border-secondary p-3"
-                        value="{{ field.value|default:'0' }}" required>
-                    {% elif field.name == 'required_skills_input' %}
-                    <textarea name="{{ field.name }}" class="form-control bg-dark text-white border-secondary p-3"
-                        rows="3" placeholder="Python, Django, Machine Learning"
-                        required>{{ field.value|default:'' }}</textarea>
-                    {% else %}
-                    {{ field }}
-                    {% endif %}
-                    {% if field.help_text %}
-                    <div class="form-text text-secondary-c mt-2">{{ field.help_text }}</div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-
-                <div class="d-grid mt-5">
-                    <button type="submit" class="btn btn-primary btn-lg">Create Job Requirement</button>
-                </div>
-            </form>
+    <div class="col-lg-9">
+        <div class="d-flex align-items-center gap-3 mb-5">
+            <a href="{% url 'job_list' %}" class="btn btn-sm btn-outline-secondary rounded-pill">← Back</a>
+            <div>
+                <h2 class="mb-1">Create Job Requirement</h2>
+                <p class="text-secondary-c mb-0">Define the role and skills to automatically screen incoming resumes.
+                </p>
+            </div>
         </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Basic Info -->
+            <div class="form-section">
+                <div class="form-section-title">📋 Basic Information</div>
+                <div class="row g-4">
+                    <div class="col-12">
+                        <label class="form-label">Job Title</label>
+                        {{ form.title.errors }}
+                        <input type="text" name="title" class="form-control" value="{{ form.title.value|default:'' }}"
+                            placeholder="e.g. Senior Backend Engineer" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Location</label>
+                        {{ form.location.errors }}
+                        <input type="text" name="location" class="form-control"
+                            value="{{ form.location.value|default:'' }}" placeholder="e.g. Remote, New York, NY">
+                        <div class="form-text">Leave blank if location is flexible</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Industry / Domain</label>
+                        {{ form.industry_domain.errors }}
+                        <input type="text" name="industry_domain" class="form-control"
+                            value="{{ form.industry_domain.value|default:'' }}"
+                            placeholder="e.g. FinTech, HealthTech, SaaS">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Years of Experience Required</label>
+                        {{ form.experience_years.errors }}
+                        <input type="number" name="experience_years" class="form-control"
+                            value="{{ form.experience_years.value|default:'0' }}" min="0" max="30" required>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="is_template" id="is_template" {% if
+                                form.is_template.value %}checked{% endif %}>
+                            <label class="form-check-label text-secondary-c" for="is_template">
+                                Save as reusable template
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Job Description</label>
+                        {{ form.description.errors }}
+                        <textarea name="description" class="form-control" rows="6"
+                            placeholder="Describe the role, responsibilities, and team..."
+                            required>{{ form.description.value|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skills & Requirements -->
+            <div class="form-section">
+                <div class="form-section-title">🛠️ Skills & Requirements</div>
+                <div class="row g-4">
+                    <div class="col-12">
+                        <label class="form-label">Required Skills <span class="text-danger">*</span></label>
+                        {{ form.required_skills_input.errors }}
+                        <textarea name="required_skills_input" class="form-control" rows="3"
+                            placeholder="Python, Django, PostgreSQL, REST APIs, Docker"
+                            required>{{ form.required_skills_input.value|default:'' }}</textarea>
+                        <div class="form-text">Comma-separated. Resumes will be matched against these skills.</div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Preferred Skills</label>
+                        {{ form.preferred_skills_input.errors }}
+                        <textarea name="preferred_skills_input" class="form-control" rows="2"
+                            placeholder="AWS, Redis, Kubernetes, GraphQL">{{ form.preferred_skills_input.value|default:'' }}</textarea>
+                        <div class="form-text">Optional. Nice-to-have skills.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Mandatory Certifications</label>
+                        {{ form.mandatory_certifications_input.errors }}
+                        <textarea name="mandatory_certifications_input" class="form-control" rows="2"
+                            placeholder="AWS Certified, PMP, CISSP">{{ form.mandatory_certifications_input.value|default:'' }}</textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Compliance Requirements</label>
+                        {{ form.compliance_requirements_input.errors }}
+                        <textarea name="compliance_requirements_input" class="form-control" rows="2"
+                            placeholder="GDPR, HIPAA, SOC2">{{ form.compliance_requirements_input.value|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JD File Upload -->
+            <div class="form-section">
+                <div class="form-section-title">📄 Job Description File (Optional)</div>
+                <label class="form-label">Upload JD File (PDF or DOCX)</label>
+                {{ form.file.errors }}
+                <input type="file" name="file" class="form-control" accept=".pdf,.docx">
+                <div class="form-text">Optional. Upload the original job description document for reference.</div>
+            </div>
+
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary btn-lg py-3">
+                    ✨ Create Job Requirement
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

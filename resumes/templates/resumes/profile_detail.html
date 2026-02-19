@@ -1,0 +1,69 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row">
+    <!-- Profile Info & Status -->
+    <div class="col-md-4 mb-4">
+        <div class="card bg-card-bg shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title mb-3">{{ profile.candidate_name }}</h4>
+                <p class="text-secondary-c mb-1"><strong>Email:</strong> {{ profile.email }}</p>
+                <p class="text-secondary-c mb-1"><strong>Uploaded By:</strong> {{ profile.created_by.username }}</p>
+                <p class="text-secondary-c mb-3"><strong>Date:</strong> {{ profile.created_at|date:"M d, Y" }}</p>
+
+                <hr class="border-secondary">
+
+                <h5 class="mb-3">Update Status</h5>
+                <form method="post">
+                    {% csrf_token %}
+                    {{ status_form.as_p }}
+                    <button type="submit" class="btn btn-outline-primary w-100">Update Status</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card bg-card-bg mt-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Secure Files (Versions)</h5>
+                <ul class="list-group list-group-flush bg-transparent">
+                    {% for version in versions %}
+                    <li class="list-group-item bg-transparent text-light border-secondary ps-0 pe-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>v{{ version.version_number }}</strong>
+                                <br>
+                                <small class="text-secondary-c">{{ version.created_at|date:"M d, H:i" }}</small>
+                            </div>
+                            <span class="badge bg-secondary">Encrypted</span>
+                            <!-- MVP: No download link for encrypted files yet, purely for tracking -->
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="col-md-8">
+        <h3 class="mb-4">Submission Timeline</h3>
+        <div class="timeline">
+            {% for activity in activities %}
+            <div
+                class="card bg-card-bg mb-3 border-start border-4 {% if forloop.first %}border-primary{% else %}border-secondary{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h5 class="card-title">{{ activity.action }}</h5>
+                        <small class="text-secondary-c">{{ activity.timestamp|date:"M d, H:i" }}</small>
+                    </div>
+                    <p class="card-text text-light">{{ activity.details }}</p>
+                    <small class="text-muted">By {{ activity.actor.username|default:"System" }}</small>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-center text-muted">No activity recorded.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,34 +1,147 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
-<div class="row">
-    <div class="col-lg-8 mx-auto">
-        <div class="card p-5 mb-5">
-            <div class="d-flex justify-content-between align-items-start mb-4">
-                <div>
-                    <h1 class="mb-2">{{ job.title }}</h1>
-                    <span class="badge bg-primary">{{ job.experience_years }} Years Exp.</span>
-                    <span class="text-secondary-c ms-3">Posted on {{ job.created_at|date:"M d, Y" }}</span>
+<div class="d-flex align-items-center gap-3 mb-5">
+    <a href="{% url 'job_list' %}" class="btn btn-sm btn-outline-secondary rounded-pill">← Back to Jobs</a>
+    {% if job.is_template %}
+    <span class="badge bg-info text-dark px-3">Template</span>
+    {% endif %}
+</div>
+
+<div class="row g-4">
+    <!-- Left: Job Details -->
+    <div class="col-lg-5">
+        <div class="glass-panel h-100">
+            <h1 class="mb-3">{{ job.title }}</h1>
+
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <span class="badge rounded-pill bg-primary px-3 py-2">{{ job.experience_years }}+ yrs exp</span>
+                {% if job.location %}
+                <span class="badge rounded-pill bg-dark border border-secondary px-3 py-2 text-secondary-c">📍 {{
+                    job.location }}</span>
+                {% endif %}
+                {% if job.industry_domain %}
+                <span class="badge rounded-pill bg-dark border border-secondary px-3 py-2 text-secondary-c">🏢 {{
+                    job.industry_domain }}</span>
+                {% endif %}
+            </div>
+
+            <div class="mb-4">
+                <div class="text-accent small fw-bold text-uppercase mb-2">Description</div>
+                <p class="text-secondary-c" style="white-space: pre-line; line-height: 1.7;">{{ job.description }}</p>
+            </div>
+
+            <div class="mb-4">
+                <div class="text-accent small fw-bold text-uppercase mb-2">Required Skills</div>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for skill in job.required_skills %}
+                    <span class="badge bg-dark border border-primary text-primary p-2 px-3">{{ skill }}</span>
+                    {% empty %}
+                    <span class="text-secondary-c fst-italic">No skills listed.</span>
+                    {% endfor %}
                 </div>
-                <a href="{% url 'job_list' %}" class="btn btn-outline-light btn-sm">Back to Jobs</a>
             </div>
 
-            <hr class="border-secondary my-4">
+            {% if job.preferred_skills %}
+            <div class="mb-4">
+                <div class="text-accent small fw-bold text-uppercase mb-2">Preferred Skills</div>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for skill in job.preferred_skills %}
+                    <span class="badge bg-dark border border-secondary text-secondary-c p-2 px-3">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
 
-            <h5 class="text-accent text-uppercase small fw-bold mb-3">Description</h5>
-            <p class="text-secondary-c mb-5" style="white-space: pre-line;">{{ job.description }}</p>
+            {% if job.mandatory_certifications %}
+            <div class="mb-4">
+                <div class="text-accent small fw-bold text-uppercase mb-2">Mandatory Certifications</div>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for cert in job.mandatory_certifications %}
+                    <span class="badge bg-warning text-dark p-2 px-3">{{ cert }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
 
-            <h5 class="text-accent text-uppercase small fw-bold mb-3">Required Skills</h5>
-            <div class="d-flex flex-wrap gap-2 mb-5">
-                {% for skill in job.required_skills %}
-                <span class="badge bg-dark border border-secondary p-2 px-3">{{ skill }}</span>
-                {% endfor %}
+            {% if job.compliance_requirements %}
+            <div class="mb-4">
+                <div class="text-accent small fw-bold text-uppercase mb-2">Compliance Requirements</div>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for req in job.compliance_requirements %}
+                    <span class="badge bg-dark border border-warning text-warning p-2 px-3">{{ req }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="mt-4 pt-3 border-top border-secondary">
+                <small class="text-secondary-c">Posted on {{ job.created_at|date:"F d, Y" }}</small>
             </div>
 
-            <div class="d-grid">
-                <a href="{% url 'upload_resume' %}" class="btn btn-primary">Match a Resume to this Job</a>
+            <div class="d-grid mt-4">
+                <a href="{% url 'bulk_upload' %}" class="btn btn-primary">Upload Resumes for this Job</a>
             </div>
         </div>
+    </div>
+
+    <!-- Right: Matched Candidates -->
+    <div class="col-lg-7">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Matched Candidates</h4>
+            <span class="badge rounded-pill bg-dark border border-secondary px-3 py-2 text-secondary-c">
+                {{ scores|length }} total
+            </span>
+        </div>
+
+        {% if scores %}
+        <div class="d-flex flex-column gap-3">
+            {% for score in scores %}
+            <div class="card p-4 d-flex flex-row align-items-center gap-4">
+                <!-- Score Ring -->
+                <div class="text-center flex-shrink-0" style="width: 64px;">
+                    <div class="display-6 fw-bold mb-0
+                        {% if score.match_percentage >= 65 %}text-success
+                        {% elif score.match_percentage >= 40 %}text-warning
+                        {% else %}text-danger{% endif %}">
+                        {{ score.match_percentage|floatformat:0 }}<span class="fs-6">%</span>
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div class="flex-grow-1">
+                    <div class="fw-bold text-white">{{ score.resume.candidate_name|default:"Unknown Candidate" }}</div>
+                    <div class="text-secondary-c small">{{ score.resume.email|default:"" }}</div>
+                    <div class="d-flex gap-2 mt-2">
+                        <span class="badge rounded-pill px-3
+                            {% if score.classification == 'SHORTLISTED' %}badge-shortlisted
+                            {% elif score.classification == 'MAYBE' %}badge-maybe
+                            {% else %}badge-rejected{% endif %}">
+                            {{ score.classification|title }}
+                        </span>
+                        <span class="badge bg-dark border border-secondary text-secondary-c">
+                            {{ score.matched_skills|length }}/{{
+                            score.matched_skills|length|add:score.missing_skills|length }} skills
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Action -->
+                <div class="flex-shrink-0">
+                    <a href="{% url 'resume_detail' pk=score.pk %}"
+                        class="btn btn-sm btn-outline-light rounded-pill px-3">
+                        View Analysis
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="glass-panel text-center py-5">
+            <p class="text-secondary-c mb-3">No resumes screened for this job yet.</p>
+            <a href="{% url 'bulk_upload' %}" class="btn btn-outline-primary rounded-pill px-4">Upload Resumes</a>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
