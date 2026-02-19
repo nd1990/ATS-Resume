@@ -14,6 +14,7 @@ from django.contrib.auth.decorators import login_required
 from .models import ResumeScore, CandidateProfile, ProfileVersion, SubmissionActivity
 import os
 import re
+import tempfile
 import zipfile
 from django.core.files.base import ContentFile
 
@@ -144,10 +145,25 @@ def secure_dashboard(request):
 
     analysis_result = None
     if request.method == 'POST':
-        analysis_form = JDResumeAnalysisForm(request.POST)
+        analysis_form = JDResumeAnalysisForm(request.POST, request.FILES)
         if analysis_form.is_valid():
             jd_text = analysis_form.cleaned_data['job_description']
-            resume_text = analysis_form.cleaned_data['candidate_resume']
+            uploaded_file = analysis_form.cleaned_data['candidate_file']
+
+            # Persist uploaded file only to a temporary location for parsing
+            suffix = os.path.splitext(uploaded_file.name)[1].lower()
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                for chunk in uploaded_file.chunks():
+                    tmp.write(chunk)
+                tmp_path = tmp.name
+
+            try:
+                resume_text = extract_resume_text(tmp_path) or ""
+            finally:
+                try:
+                    os.remove(tmp_path)
+                except OSError:
+                    pass
 
             required_skills = extract_keywords(jd_text) or []
             base_scores = calculate_resume_score(resume_text, jd_text, required_skills)

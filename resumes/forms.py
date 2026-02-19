@@ -47,14 +47,13 @@ class JDResumeAnalysisForm(forms.Form):
             }
         ),
     )
-    candidate_resume = forms.CharField(
-        label="Candidate Resume (Updated)",
-        widget=forms.Textarea(
+    candidate_file = forms.FileField(
+        label="Candidate Resume File",
+        help_text="Upload PDF, DOCX, PNG or JPG.",
+        widget=forms.ClearableFileInput(
             attrs={
-                "rows": 6,
-                "placeholder": "Paste the candidate’s updated resume here",
-                "class": "form-control bg-card-bg text-white",
-                "style": "resize: vertical;",
+                "class": "form-control",
+                "accept": ".pdf,.docx,.png,.jpg,.jpeg",
             }
         ),
     )
