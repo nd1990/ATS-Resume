@@ -14,7 +14,6 @@ from django.contrib.auth.decorators import login_required
 from .models import ResumeScore, CandidateProfile, ProfileVersion, SubmissionActivity
 import os
 import re
-import tempfile
 import zipfile
 from django.core.files.base import ContentFile
 
@@ -150,28 +149,29 @@ def secure_dashboard(request):
             jd_text = analysis_form.cleaned_data['job_description']
             uploaded_file = analysis_form.cleaned_data['candidate_file']
 
-            # Persist uploaded file only to a temporary location for parsing
-            suffix = os.path.splitext(uploaded_file.name)[1].lower()
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-                for chunk in uploaded_file.chunks():
-                    tmp.write(chunk)
-                tmp_path = tmp.name
+            # 1. Store resume in DB (persisted)
+            resume = Resume()
+            resume.file = uploaded_file
+            fname = os.path.basename(uploaded_file.name)
+            resume.candidate_name = os.path.splitext(fname)[0].replace('_', ' ').title()
+            resume.save()
 
             try:
-                resume_text = extract_resume_text(tmp_path) or ""
-            finally:
-                try:
-                    os.remove(tmp_path)
-                except OSError:
-                    pass
+                resume.parsed_content = extract_resume_text(resume.file.path) or ""
+                resume.save(update_fields=['parsed_content'])
+            except Exception:
+                pass
 
+            resume_text = resume.parsed_content or ""
+
+            # 2. Run full QA: JD match + document quality + certs + compliance + risk
             required_skills = extract_keywords(jd_text) or []
             base_scores = calculate_resume_score(resume_text, jd_text, required_skills)
-
             experience_score, experience_notes = compute_experience_match(jd_text, resume_text)
             cert_status, cert_details = analyze_certifications(jd_text, resume_text)
             compliance_issues = detect_compliance_issues(jd_text, resume_text)
             risk_flags = detect_risk_flags(jd_text, resume_text)
+            doc_quality_score, doc_quality_label = compute_document_quality(resume_text)
             final_score, recommendation = compute_final_score_and_recommendation(
                 base_scores['semantic_score'],
                 base_scores['skill_score'],
@@ -179,8 +179,19 @@ def secure_dashboard(request):
                 len(compliance_issues),
                 len(risk_flags),
             )
+            qa_grade, qa_verdict = compute_qa_grade_and_verdict(
+                final_score,
+                doc_quality_score,
+                cert_status,
+                len(compliance_issues),
+                len(risk_flags),
+                recommendation,
+            )
 
             analysis_result = {
+                "stored_resume_id": resume.pk,
+                "stored_resume_name": resume.candidate_name or fname,
+                "stored_file_name": fname,
                 "skill_match_percentage": base_scores['skill_score'],
                 "experience_match_score": experience_score,
                 "experience_notes": experience_notes,
@@ -188,8 +199,12 @@ def secure_dashboard(request):
                 "certification_details": cert_details,
                 "compliance_issues": compliance_issues,
                 "risk_flags": risk_flags,
+                "document_quality_score": doc_quality_score,
+                "document_quality_label": doc_quality_label,
                 "final_weighted_score": final_score,
                 "recommendation": recommendation,
+                "qa_grade": qa_grade,
+                "qa_verdict": qa_verdict,
             }
     else:
         analysis_form = JDResumeAnalysisForm()
@@ -396,3 +411,64 @@ def compute_final_score_and_recommendation(
         recommendation = "Reject"
 
     return round(final, 2), recommendation
+
+
+DOCUMENT_QUALITY_KEYWORDS = [
+    "experience", "education", "skills", "summary", "objective",
+    "work", "employment", "certification", "project", "contact", "email",
+]
+
+
+def compute_document_quality(resume_text):
+    """
+    Simple QA: completeness of resume (length + presence of common sections).
+    Returns (score 0-100, label).
+    """
+    if not resume_text or len(resume_text.strip()) < 50:
+        return 0.0, "Incomplete or unreadable document"
+    text_lower = resume_text.lower()
+    word_count = len(resume_text.split())
+    section_hits = sum(1 for kw in DOCUMENT_QUALITY_KEYWORDS if kw in text_lower)
+    # Score: base on word count (cap at 500) + section coverage
+    length_score = min(100.0, (word_count / 5.0))  # 500 words = 100
+    section_score = min(100.0, (section_hits / len(DOCUMENT_QUALITY_KEYWORDS)) * 100)
+    score = (0.5 * length_score) + (0.5 * section_score)
+    score = round(min(100.0, score), 2)
+    if score >= 80:
+        label = "High quality – complete and well-structured"
+    elif score >= 55:
+        label = "Good – main sections present"
+    elif score >= 30:
+        label = "Fair – some sections missing or brief"
+    else:
+        label = "Needs improvement – sparse or unclear content"
+    return score, label
+
+
+def compute_qa_grade_and_verdict(
+    final_score,
+    doc_quality_score,
+    cert_status,
+    compliance_count,
+    risk_count,
+    recommendation,
+):
+    """
+    Best QA style: letter grade (A/B/C/D) and short verdict.
+    """
+    cert_ok = "missing" not in cert_status.lower() and "not specified" not in cert_status.lower()
+    cert_ok = cert_ok or "all mandatory" in cert_status.lower()
+
+    if final_score >= 80 and doc_quality_score >= 60 and compliance_count == 0 and risk_count == 0:
+        grade = "A"
+        verdict = "Best QA – Strong match, document and checks passed. Ready for next stage."
+    elif final_score >= 65 and compliance_count == 0 and risk_count == 0:
+        grade = "B"
+        verdict = "Good QA – Meets requirements. Minor gaps (e.g. certs) can be clarified."
+    elif final_score >= 50 or (compliance_count == 0 and risk_count == 0):
+        grade = "C"
+        verdict = "Hold – Some criteria met. Review experience, certs or compliance before deciding."
+    else:
+        grade = "D"
+        verdict = "Does not meet QA – Significant gaps, compliance or risk issues. Not recommended."
+    return grade, verdict
