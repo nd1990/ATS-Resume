@@ -6,12 +6,13 @@ from .forms import (
     SecureProfileUploadForm,
     CandidateStatusUpdateForm,
     JDResumeAnalysisForm,
+    AIFilterBatchForm,
 )
 from jobs.models import JobRequirement
 from ai_engine.parser import extract_resume_text
 from ai_engine.screener import calculate_resume_score, extract_keywords
 from django.contrib.auth.decorators import login_required
-from .models import ResumeScore, CandidateProfile, ProfileVersion, SubmissionActivity
+from .models import ResumeScore, CandidateProfile, ProfileVersion, SubmissionActivity, ScanRun, ScanResult
 import os
 import re
 import zipfile
@@ -284,6 +285,87 @@ def profile_detail(request, pk):
         'activities': activities,
         'status_form': status_form
     })
+
+
+@login_required
+def ai_filter_page(request):
+    """AI-based filter & quality check: paste JD, upload multiple resumes, scan and get best candidates + reports."""
+    if request.method == 'POST':
+        form = AIFilterBatchForm(request.POST, request.FILES)
+        if form.is_valid():
+            jd_text = form.cleaned_data['job_description'].strip()
+            files = request.FILES.getlist('resume_files')
+            if not files:
+                form.add_error(None, 'Upload at least one resume (PDF, DOCX, PNG or JPG).')
+            else:
+                scan_run = ScanRun.objects.create(created_by=request.user, jd_text=jd_text)
+                allowed = ('.pdf', '.docx', '.png', '.jpg', '.jpeg')
+                for f in files:
+                    if not f.name.lower().endswith(allowed):
+                        continue
+                    resume = Resume()
+                    resume.file = f
+                    fname = os.path.basename(f.name)
+                    resume.candidate_name = os.path.splitext(fname)[0].replace('_', ' ').title()
+                    resume.save()
+                    try:
+                        resume.parsed_content = extract_resume_text(resume.file.path) or ""
+                        resume.save(update_fields=['parsed_content'])
+                    except Exception:
+                        pass
+                    resume_text = resume.parsed_content or ""
+                    required_skills = extract_keywords(jd_text) or []
+                    base_scores = calculate_resume_score(resume_text, jd_text, required_skills)
+                    experience_score, experience_notes = compute_experience_match(jd_text, resume_text)
+                    cert_status, cert_details = analyze_certifications(jd_text, resume_text)
+                    compliance_issues = detect_compliance_issues(jd_text, resume_text)
+                    risk_flags = detect_risk_flags(jd_text, resume_text)
+                    doc_quality_score, doc_quality_label = compute_document_quality(resume_text)
+                    final_score, recommendation = compute_final_score_and_recommendation(
+                        base_scores['semantic_score'], base_scores['skill_score'], experience_score,
+                        len(compliance_issues), len(risk_flags),
+                    )
+                    qa_grade, qa_verdict = compute_qa_grade_and_verdict(
+                        final_score, doc_quality_score, cert_status,
+                        len(compliance_issues), len(risk_flags), recommendation,
+                    )
+                    ScanResult.objects.create(
+                        scan_run=scan_run,
+                        resume=resume,
+                        candidate_name=resume.candidate_name or fname,
+                        document_quality_score=doc_quality_score,
+                        document_quality_label=doc_quality_label,
+                        skill_match_percentage=base_scores['skill_score'],
+                        experience_match_score=experience_score,
+                        experience_notes=experience_notes,
+                        certification_status=cert_status,
+                        certification_details=cert_details,
+                        compliance_issues=compliance_issues,
+                        risk_flags=risk_flags,
+                        final_weighted_score=final_score,
+                        recommendation=recommendation,
+                        qa_grade=qa_grade,
+                        qa_verdict=qa_verdict,
+                    )
+                return redirect('filter_results', scan_run_id=scan_run.pk)
+    else:
+        form = AIFilterBatchForm()
+    return render(request, 'resumes/ai_filter.html', {'form': form})
+
+
+@login_required
+def filter_results(request, scan_run_id):
+    """List of candidates from a scan run, sorted by score (best first)."""
+    scan_run = get_object_or_404(ScanRun, pk=scan_run_id, created_by=request.user)
+    results = scan_run.results.select_related('resume').all()
+    return render(request, 'resumes/filter_results.html', {'scan_run': scan_run, 'results': results})
+
+
+@login_required
+def scan_report(request, result_id):
+    """Full QA report for one candidate (print-friendly)."""
+    result = get_object_or_404(ScanResult, pk=result_id, scan_run__created_by=request.user)
+    return render(request, 'resumes/scan_report.html', {'result': result})
 
 
 def extract_years_of_experience(text):

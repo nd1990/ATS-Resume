@@ -115,3 +115,44 @@ class SubmissionActivity(models.Model):
     class Meta:
         ordering = ['-timestamp']
 
+
+class ScanRun(models.Model):
+    """One batch: JD + multiple resumes scanned together."""
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='scan_runs')
+    jd_text = models.TextField(help_text="Job description used for matching")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"ScanRun {self.id} ({self.created_at.date()})"
+
+
+class ScanResult(models.Model):
+    """Per-candidate result: all AI match + quality check + report data."""
+    scan_run = models.ForeignKey(ScanRun, on_delete=models.CASCADE, related_name='results')
+    resume = models.ForeignKey(Resume, on_delete=models.CASCADE, related_name='scan_results')
+    candidate_name = models.CharField(max_length=255, blank=True)
+    # Scores
+    document_quality_score = models.FloatField(default=0.0)
+    document_quality_label = models.CharField(max_length=255, blank=True)
+    skill_match_percentage = models.FloatField(default=0.0)
+    experience_match_score = models.FloatField(default=0.0)
+    experience_notes = models.TextField(blank=True)
+    certification_status = models.CharField(max_length=255, blank=True)
+    certification_details = models.TextField(blank=True)
+    compliance_issues = models.JSONField(default=list)
+    risk_flags = models.JSONField(default=list)
+    final_weighted_score = models.FloatField(default=0.0)
+    recommendation = models.CharField(max_length=20, blank=True)  # Hire / Hold / Reject
+    qa_grade = models.CharField(max_length=5, blank=True)  # A / B / C / D
+    qa_verdict = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-final_weighted_score']
+
+    def __str__(self):
+        return f"{self.candidate_name} - {self.final_weighted_score}%"
+

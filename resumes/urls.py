@@ -10,4 +10,8 @@ urlpatterns = [
     path('secure/dashboard/', views.secure_dashboard, name='secure_dashboard'),
     path('secure/upload/', views.upload_profile, name='upload_profile'),
     path('secure/profile/<int:pk>/', views.profile_detail, name='profile_detail'),
+    # AI Filter & Quality Check (batch scan + reports)
+    path('ai-filter/', views.ai_filter_page, name='ai_filter'),
+    path('ai-filter/results/<int:scan_run_id>/', views.filter_results, name='filter_results'),
+    path('ai-filter/report/<int:result_id>/', views.scan_report, name='scan_report'),
 ]

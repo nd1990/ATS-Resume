@@ -58,3 +58,18 @@ class JDResumeAnalysisForm(forms.Form):
         ),
     )
 
+
+class AIFilterBatchForm(forms.Form):
+    """Batch upload: one JD + multiple resumes for AI filter & quality check."""
+    job_description = forms.CharField(
+        label="Job Description",
+        widget=forms.Textarea(
+            attrs={
+                "rows": 5,
+                "placeholder": "Paste the full job description. All resumes will be matched against this JD.",
+                "class": "form-control bg-card-bg text-white",
+                "style": "resize: vertical;",
+            }
+        ),
+    )
+
