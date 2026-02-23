@@ -14,4 +14,6 @@ urlpatterns = [
     path('ai-filter/', views.ai_filter_page, name='ai_filter'),
     path('ai-filter/results/<int:scan_run_id>/', views.filter_results, name='filter_results'),
     path('ai-filter/report/<int:result_id>/', views.scan_report, name='scan_report'),
+    # Match stored resumes with JD (quality check, specs, certificates)
+    path('match-stored/', views.match_stored_resumes, name='match_stored'),
 ]

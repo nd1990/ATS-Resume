@@ -73,3 +73,28 @@ class AIFilterBatchForm(forms.Form):
         ),
     )
 
+
+class MatchStoredForm(forms.Form):
+    """Match stored resumes with a JD: paste JD + select which stored resumes to run QA on."""
+    job_description = forms.CharField(
+        label="Job Description",
+        widget=forms.Textarea(
+            attrs={
+                "rows": 5,
+                "placeholder": "Paste the job description. Stored resumes will be matched against specs, certificates, and requirements.",
+                "class": "form-control bg-card-bg text-white",
+                "style": "resize: vertical;",
+            }
+        ),
+    )
+    resumes = forms.ModelMultipleChoiceField(
+        queryset=Resume.objects.none(),
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+        label="Select stored resumes to match",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['resumes'].queryset = Resume.objects.all().order_by('-uploaded_at')
+
