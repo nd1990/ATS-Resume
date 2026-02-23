@@ -20,7 +20,6 @@
                     <th class="py-3 ps-4 rounded-start">#</th>
                     <th class="py-3">Candidate</th>
                     <th class="py-3">Score</th>
-                    <th class="py-3">Grade</th>
                     <th class="py-3">Recommendation</th>
                     <th class="py-3 pe-4 rounded-end text-end">Report</th>
                 </tr>
@@ -36,15 +35,6 @@
                         <span class="text-accent fw-bold">{{ r.final_weighted_score }}%</span>
                     </td>
                     <td>
-                        <span class="badge rounded-pill
-                            {% if r.qa_grade == 'A' %}bg-success
-                            {% elif r.qa_grade == 'B' %}bg-info
-                            {% elif r.qa_grade == 'C' %}bg-warning text-dark
-                            {% else %}bg-danger{% endif %}">
-                            {{ r.qa_grade }}
-                        </span>
-                    </td>
-                    <td>
                         <span class="badge
                             {% if r.recommendation == 'Hire' %}bg-success
                             {% elif r.recommendation == 'Hold' %}bg-warning text-dark
@@ -58,11 +48,20 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center py-5 text-secondary-c">No results in this scan.</td>
+                    <td colspan="5" class="text-center py-5 text-secondary-c">No results in this scan.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+{% if results %}
+<div class="mt-4 d-flex justify-content-end">
+    <form method="post" action="{% url 'clear_scan_run' scan_run.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger rounded-pill">Clear All Results</button>
+    </form>
+</div>
+{% endif %}
 {% endblock %}

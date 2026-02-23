@@ -380,6 +380,15 @@ def filter_results(request, scan_run_id):
 
 
 @login_required
+def clear_scan_run(request, scan_run_id):
+    """Clear all results for a given scan run (does not delete resumes)."""
+    scan_run = get_object_or_404(ScanRun, pk=scan_run_id, created_by=request.user)
+    if request.method == 'POST':
+        scan_run.results.all().delete()
+    return redirect('filter_results', scan_run_id=scan_run.pk)
+
+
+@login_required
 def scan_report(request, result_id):
     """Full QA report for one candidate (print-friendly)."""
     result = get_object_or_404(ScanResult, pk=result_id, scan_run__created_by=request.user)

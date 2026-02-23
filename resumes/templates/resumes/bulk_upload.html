@@ -42,12 +42,12 @@
         </form>
 
         {% if uploaded_count %}
-        <div class="alert alert-success mt-4 bg-success bg-opacity-10 border-0 text-white">
-            <strong>{{ uploaded_count }}</strong> resume{% if uploaded_count != 1 %}s{% endif %} uploaded and stored successfully.
+        <div class="alert alert-success mt-4 border-0" style="background: rgba(34,197,94,0.12); color: #bbf7d0;">
+            <strong style="color:#4ade80;">{{ uploaded_count }}</strong> resume{% if uploaded_count != 1 %}s{% endif %} uploaded and stored successfully.
             {% if selected_job %}
-            They were also screened against <strong class="text-accent">{{ selected_job.title }}</strong>.
+            They were also screened against <strong style="color:#4ade80;">{{ selected_job.title }}</strong>.
             {% else %}
-            Use <a href="{% url 'match_stored' %}" class="text-accent fw-bold">Match Stored</a> to run quality check and match against any JD.
+            Use <a href="{% url 'match_stored' %}" class="fw-bold" style="color:#4ade80;">Match Stored</a> to run quality check and match against any JD.
             {% endif %}
         </div>
         {% endif %}
