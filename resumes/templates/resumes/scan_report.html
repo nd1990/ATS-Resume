@@ -1,0 +1,107 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card bg-card-bg shadow-sm border-0">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0 text-accent">Quality Assurance Report</h2>
+                    <span class="badge rounded-pill fs-6 px-3 py-2
+                        {% if result.qa_grade == 'A' %}bg-success
+                        {% elif result.qa_grade == 'B' %}bg-info
+                        {% elif result.qa_grade == 'C' %}bg-warning text-dark
+                        {% else %}bg-danger{% endif %}">
+                        Grade {{ result.qa_grade }}
+                    </span>
+                </div>
+                <p class="text-secondary-c small mb-4">Candidate: <strong class="text-white">{{ result.candidate_name }}</strong></p>
+
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-secondary-c">Final weighted score</span>
+                        <span class="fw-bold text-white">{{ result.final_weighted_score }}/100</span>
+                    </div>
+                    <div class="progress bg-dark" style="height: 8px; border-radius: 4px;">
+                        <div class="progress-bar
+                            {% if result.final_weighted_score >= 80 %}bg-success
+                            {% elif result.final_weighted_score >= 55 %}bg-warning
+                            {% else %}bg-danger{% endif %}"
+                            style="width: {{ result.final_weighted_score }}%;"></div>
+                    </div>
+                </div>
+
+                <div class="small mb-4">
+                    <div class="d-flex justify-content-between py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-secondary-c">Document quality</span>
+                        <span class="text-white">{{ result.document_quality_score }}% – {{ result.document_quality_label }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-secondary-c">Skill match</span>
+                        <span class="text-accent">{{ result.skill_match_percentage }}%</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-secondary-c">Experience match</span>
+                        <span class="text-accent">{{ result.experience_match_score }}%</span>
+                    </div>
+                    <div class="py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-secondary-c d-block mb-1">Experience note</span>
+                        <span class="text-white">{{ result.experience_notes }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-secondary-c">Certifications</span>
+                        <span class="text-white">{{ result.certification_status }}</span>
+                    </div>
+                    <div class="py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-secondary-c">{{ result.certification_details }}</span>
+                    </div>
+                    <div class="py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-secondary-c d-block mb-1">Compliance</span>
+                        {% if result.compliance_issues %}
+                            <ul class="mb-0 ps-3 text-white small">
+                                {% for issue in result.compliance_issues %}
+                                <li>{{ issue }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <span class="text-success small">No major compliance gaps detected.</span>
+                        {% endif %}
+                    </div>
+                    <div class="py-2">
+                        <span class="text-secondary-c d-block mb-1">Risk flags</span>
+                        {% if result.risk_flags %}
+                            <ul class="mb-0 ps-3 text-warning small">
+                                {% for flag in result.risk_flags %}
+                                <li>{{ flag }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <span class="text-success small">No explicit risk indicators found.</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <hr class="border-secondary border-opacity-25">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-secondary-c">Recommendation</span>
+                    <span class="badge
+                        {% if result.recommendation == 'Hire' %}bg-success
+                        {% elif result.recommendation == 'Hold' %}bg-warning text-dark
+                        {% else %}bg-danger{% endif %}">
+                        {{ result.recommendation }}
+                    </span>
+                </div>
+                <div class="p-3 rounded text-white" style="background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.08);">
+                    <span class="text-accent small d-block mb-1">QA verdict</span>
+                    <strong>{{ result.qa_verdict }}</strong>
+                </div>
+
+                <div class="mt-4">
+                    <a href="{% url 'filter_results' result.scan_run.pk %}" class="btn btn-outline-light">Back to results</a>
+                    <button type="button" class="btn btn-primary ms-2" onclick="window.print();">Print / Save as PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

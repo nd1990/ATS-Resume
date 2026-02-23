@@ -1,0 +1,39 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card bg-card-bg shadow-sm border-0">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <h2 class="mb-0 text-accent">AI Filter & Quality Check</h2>
+                    <span class="badge bg-primary">Batch</span>
+                </div>
+                <p class="text-secondary-c mb-4">
+                    Upload multiple candidate resumes and paste one job description. We will match all documents, certificates, and values, then filter to find the best candidates and generate reports.
+                </p>
+
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label">{{ form.job_description.label }}</label>
+                        {{ form.job_description }}
+                        {% if form.job_description.errors %}
+                            <div class="text-danger small mt-1">{{ form.job_description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Candidate Resumes</label>
+                        <input type="file" name="resume_files" multiple accept=".pdf,.docx,.png,.jpg,.jpeg" class="form-control">
+                        <div class="form-text">Upload multiple PDF, DOCX, PNG or JPG. We will scan, match documents & certificates, and generate reports.</div>
+                        {% if form.non_field_errors %}
+                            <div class="text-danger small mt-1">{{ form.non_field_errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Scan & Filter Candidates</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
