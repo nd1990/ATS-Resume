@@ -14,28 +14,12 @@
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="row g-4">
-                <div class="col-md-6">
+                
+                <div class="col-md-12">
                     <div class="card bg-card-bg shadow-sm border-0 h-100">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center gap-2 mb-3">
-                                <span class="badge rounded-pill bg-dark text-accent">Step 1</span>
-                                <h5 class="mb-0 text-white">Select Job Role</h5>
-                            </div>
-                            <p class="text-secondary-c small mb-3">Resumes will be screened against this job’s requirements.</p>
-                            <select name="{{ form.job.name }}" class="form-select form-select-lg bg-dark text-white border-secondary" required>
-                                <option value="">-- Choose a job --</option>
-                                {% for choice in form.job.field.queryset %}
-                                <option value="{{ choice.pk }}">{{ choice.title }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card bg-card-bg shadow-sm border-0 h-100">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center gap-2 mb-3">
-                                <span class="badge rounded-pill bg-dark text-accent">Step 2</span>
+                             
                                 <h5 class="mb-0 text-white">Choose Folder</h5>
                             </div>
                             <p class="text-secondary-c small mb-3">Pick a folder with PDF, DOCX, JPG, or PNG resumes.</p>
@@ -53,7 +37,7 @@
             </div>
 
             <div class="mt-4">
-                <button type="submit" class="btn btn-primary btn-lg px-5">Start Batch Screening</button>
+                <button type="submit" class="btn btn-primary btn-lg px-5">Click Upload Resumes</button>
             </div>
         </form>
 
