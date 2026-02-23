@@ -14,7 +14,8 @@ class BulkUploadForm(forms.Form):
         queryset=JobRequirement.objects.all(),
         label="Select Job Role",
         help_text="Resumes will be screened against this job.",
-        empty_label="-- Select a Job --"
+        empty_label="-- Optional: Select a Job --",
+        required=False,
     )
     # Note: Multiple file input is handled directly in the template HTML.
     # Django's FileField validates a single file; the view reads all

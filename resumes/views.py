@@ -75,7 +75,7 @@ def bulk_upload(request):
     if request.method == 'POST':
         form = BulkUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            job = form.cleaned_data['job']
+            job = form.cleaned_data.get('job')
             files = request.FILES.getlist('resumes')
             
             for f in files:
@@ -92,31 +92,38 @@ def bulk_upload(request):
                     resume.candidate_name = os.path.splitext(fname)[0].replace('_', ' ').title()
                     resume.save()
                     
-                    # Parse and Score
+                    # Parse (always)
                     try:
                         resume.parsed_content = extract_resume_text(resume.file.path)
                         resume.save()
-                        
-                        scores = calculate_resume_score(resume.parsed_content, job.description, job.required_skills)
-                        
-                        ResumeScore.objects.create(
-                            resume=resume,
-                            job=job,
-                            match_percentage=scores['final_score'],
-                            skill_match_score=scores['skill_score'],
-                            semantic_score=scores['semantic_score'],
-                            missing_skills=scores['missing_skills'],
-                            matched_skills=scores['matched_skills'],
-                            classification=scores['classification'],
-                            ai_explanation=scores.get('ai_explanation', '')
-                        )
                     except Exception as e:
                         print(f"Error processing content for {f.name}: {e}")
+
+                    # Score only if a job was selected
+                    if job and resume.parsed_content:
+                        try:
+                            scores = calculate_resume_score(resume.parsed_content, job.description, job.required_skills)
+                            ResumeScore.objects.create(
+                                resume=resume,
+                                job=job,
+                                match_percentage=scores['final_score'],
+                                skill_match_score=scores['skill_score'],
+                                semantic_score=scores['semantic_score'],
+                                missing_skills=scores['missing_skills'],
+                                matched_skills=scores['matched_skills'],
+                                classification=scores['classification'],
+                                ai_explanation=scores.get('ai_explanation', '')
+                            )
+                        except Exception as e:
+                            print(f"Scoring error for {f.name}: {e}")
                         
                 except Exception as e:
                     print(f"Error handling file {f.name}: {e}")
                     
-            return redirect('resume_list') # Redirect to dashboard to see results
+            # If no job was selected, redirect to Match Stored for JD-based QA
+            if job:
+                return redirect('resume_list')  # scores exist for the selected job
+            return redirect('match_stored')
                 
     else:
         form = BulkUploadForm()
