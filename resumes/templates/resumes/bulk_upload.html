@@ -1,45 +1,73 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-6">
-        <div class="glass-panel">
-            <h2 class="mb-4">Bulk Resume Screening</h2>
-            <p class="text-secondary-c mb-4">
-                Select a <strong>local folder</strong> containing resumes (PDFs/DOCXs/Images).
-                The system will automatically upload and screen all valid files found in the folder.
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <h2 class="mb-0 text-accent">Bulk Resume Screening</h2>
+        </div>
+        <p class="text-secondary-c mb-4">
+            Select a <strong class="text-white">local folder</strong> containing resumes. All PDF, DOCX, JPG, and PNG files will be uploaded, stored, and screened against the job you choose.
+        </p>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card bg-card-bg shadow-sm border-0 h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="badge rounded-pill bg-dark text-accent">Step 1</span>
+                                <h5 class="mb-0 text-white">Select Job Role</h5>
+                            </div>
+                            <p class="text-secondary-c small mb-3">Resumes will be screened against this job’s requirements.</p>
+                            <select name="{{ form.job.name }}" class="form-select form-select-lg bg-dark text-white border-secondary" required>
+                                <option value="">-- Choose a job --</option>
+                                {% for choice in form.job.field.queryset %}
+                                <option value="{{ choice.pk }}">{{ choice.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-card-bg shadow-sm border-0 h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="badge rounded-pill bg-dark text-accent">Step 2</span>
+                                <h5 class="mb-0 text-white">Choose Folder</h5>
+                            </div>
+                            <p class="text-secondary-c small mb-3">Pick a folder with PDF, DOCX, JPG, or PNG resumes.</p>
+                            <div class="upload-zone rounded-3 p-4 text-center border border-secondary border-opacity-25" style="background: rgba(15,23,42,0.5); transition: all 0.2s;">
+                                <input type="file" name="resumes" id="resume-folder" class="d-none"
+                                    webkitdirectory directory multiple required>
+                                <label for="resume-folder" class="mb-0 cursor-pointer d-block">
+                                    <span class="btn btn-outline-light btn-lg px-4">Choose folder</span>
+                                    <span class="d-block text-secondary-c small mt-2" id="file-count">No folder chosen</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary btn-lg px-5">Start Batch Screening</button>
+            </div>
+        </form>
+
+        <div class="card bg-card-bg border-0 mt-4 p-4" style="border-left: 4px solid var(--accent) !important;">
+            <p class="text-secondary-c mb-0 small">
+                <strong class="text-white">Next step:</strong> After uploading, use <a href="{% url 'match_stored' %}" class="text-accent fw-bold">Match Stored</a> to run quality check and match against any JD (specs, certificates, awards).
             </p>
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-
-                <div class="mb-4">
-                    <label class="form-label text-secondary-c small fw-bold text-uppercase">{{ form.job.label }}</label>
-                    <div class="input-group">
-                        <select name="{{ form.job.name }}" class="form-select bg-dark text-white border-secondary p-3"
-                            required>
-                            {% for choice in form.job.field.queryset %}
-                            <option value="{{ choice.pk }}">{{ choice.title }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label class="form-label text-secondary-c small fw-bold text-uppercase">RESUMES</label>
-                    <div class="input-group">
-                        <input type="file" name="resumes" class="form-control bg-dark text-white border-secondary"
-                            webkitdirectory directory multiple required>
-                    </div>
-                    <div class="form-text text-secondary-c mt-2">Select a local FOLDER containing resumes
-                        (PDF/DOCX/JPG/PNG)
-                    </div>
-                </div>
-
-                <div class="d-grid mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg">Start Batch Screening</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('resume-folder').addEventListener('change', function() {
+    var n = this.files.length;
+    document.getElementById('file-count').textContent = n ? n + ' file(s) selected' : 'No folder chosen';
+});
+</script>
 {% endblock %}

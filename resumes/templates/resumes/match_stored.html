@@ -1,0 +1,88 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <h2 class="mb-0 text-accent">Match Stored Resumes with JD</h2>
+            <span class="badge bg-primary">Quality &amp; Specs</span>
+        </div>
+        <p class="text-secondary-c mb-4">
+            Select resumes you already uploaded (bulk or single), paste a job description, and run AI match against specifications, certificates, and requirements. Best candidates appear sorted by score.
+        </p>
+
+        <form method="post" id="match-stored-form">
+            {% csrf_token %}
+            <div class="card bg-card-bg shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <label class="form-label fw-bold text-white">{{ form.job_description.label }}</label>
+                    {{ form.job_description }}
+                    {% if form.job_description.errors %}
+                        <div class="text-danger small mt-1">{{ form.job_description.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card bg-card-bg shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <label class="form-label fw-bold text-white mb-0">Stored resumes – select to match</label>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-light" id="select-all">Select all</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-1" id="deselect-all">Deselect all</button>
+                        </div>
+                    </div>
+                    {% if form.resumes.errors %}
+                        <div class="text-danger small mb-2">{{ form.resumes.errors.0 }}</div>
+                    {% endif %}
+                    {% if stored_resumes %}
+                        <div class="row g-3">
+                            {% for r in stored_resumes %}
+                            <div class="col-md-6 col-lg-4">
+                                <label class="d-block mb-0 cursor-pointer rounded-3 p-3 border border-secondary border-opacity-25 hover-border-accent stored-resume-card" style="cursor: pointer; transition: border-color 0.2s, background 0.2s;">
+                                    <div class="form-check mb-0 d-flex align-items-start gap-2">
+                                        <input class="form-check-input mt-1 resume-cb" type="checkbox" name="resumes" value="{{ r.pk }}" id="resume-{{ r.pk }}">
+                                        <div class="flex-grow-1 min-w-0">
+                                            <span class="fw-bold text-white d-block">{{ r.candidate_name|default:r.file.name }}</span>
+                                            <small class="text-secondary-c d-block">{{ r.file.name }}</small>
+                                            <small class="text-secondary-c">Uploaded {{ r.uploaded_at|date:"M d, Y" }}</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-secondary-c rounded-3" style="background: rgba(15,23,42,0.5);">
+                            <p class="mb-2">No stored resumes yet.</p>
+                            <a href="{% url 'bulk_upload' %}" class="btn btn-primary btn-sm">Bulk Upload</a>
+                            <span class="mx-2 text-secondary-c">or</span>
+                            <a href="{% url 'ai_filter' %}" class="btn btn-outline-light btn-sm">Upload &amp; scan in AI Filter</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if stored_resumes %}
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-lg px-5">Run match &amp; quality check</button>
+                <a href="{% url 'bulk_upload' %}" class="btn btn-outline-light btn-lg">Bulk Upload more</a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<style>
+.stored-resume-card:hover { background: rgba(56, 189, 248, 0.06); border-color: rgba(56, 189, 248, 0.3) !important; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var selectAll = document.getElementById('select-all');
+    var deselectAll = document.getElementById('deselect-all');
+    var checkboxes = document.querySelectorAll('.resume-cb');
+    if (selectAll) selectAll.addEventListener('click', function() { checkboxes.forEach(function(cb) { cb.checked = true; }); });
+    if (deselectAll) deselectAll.addEventListener('click', function() { checkboxes.forEach(function(cb) { cb.checked = false; }); });
+});
+</script>
+{% endblock %}
