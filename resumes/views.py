@@ -77,7 +77,8 @@ def bulk_upload(request):
         if form.is_valid():
             job = form.cleaned_data.get('job')
             files = request.FILES.getlist('resumes')
-            
+            uploaded_count = 0
+
             for f in files:
                 try:
                     # Filter supported files
@@ -116,14 +117,23 @@ def bulk_upload(request):
                             )
                         except Exception as e:
                             print(f"Scoring error for {f.name}: {e}")
+                    
+                    uploaded_count += 1
                         
                 except Exception as e:
                     print(f"Error handling file {f.name}: {e}")
-                    
-            # If no job was selected, redirect to Match Stored for JD-based QA
-            if job:
-                return redirect('resume_list')  # scores exist for the selected job
-            return redirect('match_stored')
+            
+            # After upload, stay on this page and show a success message
+            success_form = BulkUploadForm()
+            return render(
+                request,
+                'resumes/bulk_upload.html',
+                {
+                    'form': success_form,
+                    'uploaded_count': uploaded_count,
+                    'selected_job': job,
+                },
+            )
                 
     else:
         form = BulkUploadForm()

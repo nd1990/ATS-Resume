@@ -41,6 +41,17 @@
             </div>
         </form>
 
+        {% if uploaded_count %}
+        <div class="alert alert-success mt-4 bg-success bg-opacity-10 border-0 text-white">
+            <strong>{{ uploaded_count }}</strong> resume{% if uploaded_count != 1 %}s{% endif %} uploaded and stored successfully.
+            {% if selected_job %}
+            They were also screened against <strong class="text-accent">{{ selected_job.title }}</strong>.
+            {% else %}
+            Use <a href="{% url 'match_stored' %}" class="text-accent fw-bold">Match Stored</a> to run quality check and match against any JD.
+            {% endif %}
+        </div>
+        {% endif %}
+
         <div class="card bg-card-bg border-0 mt-4 p-4" style="border-left: 4px solid var(--accent) !important;">
             <p class="text-secondary-c mb-0 small">
                 <strong class="text-white">Next step:</strong> After uploading, use <a href="{% url 'match_stored' %}" class="text-accent fw-bold">Match Stored</a> to run quality check and match against any JD (specs, certificates, awards).
