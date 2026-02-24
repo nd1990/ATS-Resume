@@ -462,6 +462,16 @@ def match_stored_resumes(request):
     return render(request, 'resumes/match_stored.html', {'form': form, 'stored_resumes': stored_resumes})
 
 
+@login_required
+def delete_resume(request, pk):
+    """Delete a stored resume and redirect back to match stored."""
+    if request.method != 'POST':
+        return redirect('match_stored')
+    resume = get_object_or_404(Resume, pk=pk)
+    resume.delete()
+    return redirect('match_stored')
+
+
 def extract_years_of_experience(text):
     """
     Very simple regex-based extraction of years of experience from text.

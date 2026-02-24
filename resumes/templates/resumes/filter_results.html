@@ -58,7 +58,7 @@
 
 {% if results %}
 <div class="mt-4 d-flex justify-content-end">
-    <form method="post" action="{% url 'clear_scan_run' scan_run.id %}">
+    <form method="post" action="/resumes/ai-filter/results/{{ scan_run.id }}/clear/">
         {% csrf_token %}
         <button type="submit" class="btn btn-outline-danger rounded-pill">Clear All Results</button>
     </form>

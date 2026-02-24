@@ -12,9 +12,10 @@ urlpatterns = [
     path('secure/profile/<int:pk>/', views.profile_detail, name='profile_detail'),
     # AI Filter & Quality Check (batch scan + reports)
     path('ai-filter/', views.ai_filter_page, name='ai_filter'),
-    path('ai-filter/results/<int:scan_run_id>/', views.filter_results, name='filter_results'),
     path('ai-filter/results/<int:scan_run_id>/clear/', views.clear_scan_run, name='clear_scan_run'),
+    path('ai-filter/results/<int:scan_run_id>/', views.filter_results, name='filter_results'),
     path('ai-filter/report/<int:result_id>/', views.scan_report, name='scan_report'),
     # Match stored resumes with JD (quality check, specs, certificates)
     path('match-stored/', views.match_stored_resumes, name='match_stored'),
+    path('delete/<int:pk>/', views.delete_resume, name='delete_resume'),
 ]
