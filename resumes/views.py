@@ -446,7 +446,15 @@ def match_stored_resumes(request):
     """Match stored (bulk-uploaded) resumes with a JD: run quality check, specs, certificates, and show best candidates."""
     if request.method == 'POST':
         form = MatchStoredForm(request.POST)
-        if form.is_valid():
+        # Bulk delete: action=delete with selected resume IDs
+        if request.POST.get('action') == 'delete':
+            pks = request.POST.getlist('resumes')
+            if pks:
+                Resume.objects.filter(pk__in=pks).delete()
+                return redirect('match_stored')
+            form = MatchStoredForm()
+            form.add_error('resumes', 'Select at least one resume to delete.')
+        elif form.is_valid():
             jd_text = form.cleaned_data['job_description'].strip()
             selected_resumes = form.cleaned_data['resumes']
             if not selected_resumes:
