@@ -2,7 +2,7 @@ services:
   - type: web
     name: resume-ats-checker
     runtime: python
-    buildCommand: "./build.sh"
+    buildCommand: "bash build.sh"
     startCommand: "gunicorn config.wsgi:application"
     envVars:
       - key: PYTHON_VERSION

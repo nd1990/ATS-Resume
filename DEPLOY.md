@@ -28,7 +28,7 @@ git push -u origin main
    - **Name:** `resume-ats-checker` (or any name)
    - **Region:** Choose closest
    - **Runtime:** Python 3
-   - **Build Command:** `./build.sh`
+   - **Build Command:** `bash build.sh`
    - **Start Command:** `gunicorn config.wsgi:application`
    - **Instance Type:** Free
 
@@ -57,7 +57,16 @@ Your project may be in a subfolder (e.g. `Resume ATS Checker/Resume ATS Checker/
 3. Set it to the folder that contains `manage.py` and `render.yaml` (e.g. `Resume ATS Checker` if your repo root is one level up)
 4. Save → **Manual Deploy** → **Deploy latest commit**
 
-Or deploy **without** render.yaml: create a **Web Service** manually (not Blueprint), set Build Command to `./build.sh` and Start Command to `gunicorn config.wsgi:application`, and add env vars.
+Or deploy **without** render.yaml: create a **Web Service** manually (not Blueprint), set Build Command to `bash build.sh` and Start Command to `gunicorn config.wsgi:application`, and add env vars.
+
+### If "Exited with status 1"
+
+1. **Check the build logs**: In Render, open the failed deploy → expand **Build logs** to see the exact error.
+2. **Common fixes**:
+   - `collectstatic` failed → Already fixed by using `CompressedStaticFilesStorage`.
+   - `pip install` timeout → Render free tier can be slow; retry the deploy.
+   - Out of memory → Dependencies (transformers, spacy) are heavy; consider a paid instance for first deploy, then scale down.
+3. **Ensure Root Directory** is set if your project is in a subfolder.
 
 ---
 
