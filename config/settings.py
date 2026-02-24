@@ -20,14 +20,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-75dhxggs^jeu)!s0w)_tv1bdvj6s+c)y)dx8jf+w6l*d7qut48'
+import os
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-75dhxggs^jeu)!s0w)_tv1bdvj6s+c)y)dx8jf+w6l*d7qut48')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = ['*']  # Allow Vercel and localhost
+_default_hosts = 'localhost,127.0.0.1,.ngrok-free.dev,.onrender.com'
+if os.environ.get('RENDER'):
+    _default_hosts = _default_hosts  # .onrender.com already included
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', _default_hosts).split(',')]
 
-CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.dev']
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ngrok-free.dev',
+    'https://*.onrender.com',
+]
+if os.environ.get('CSRF_TRUSTED_ORIGINS'):
+    CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.environ.get('CSRF_TRUSTED_ORIGINS').split(',')]
 
 
 # Application definition
@@ -80,7 +89,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 # Absolute path so DB connects no matter where you run the server from
-import os
 _db_path = os.path.join(str(BASE_DIR), 'db.sqlite3')
 
 DATABASES = {
