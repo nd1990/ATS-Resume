@@ -48,6 +48,19 @@ git push -u origin main
    - Go to **Shell** tab in Render dashboard.
    - Run: `python manage.py createsuperuser`
 
+### If "render.yaml not found"
+
+Your project may be in a subfolder (e.g. `Resume ATS Checker/Resume ATS Checker/`). In Render:
+
+1. Open your service → **Settings**
+2. Find **Root Directory**
+3. Set it to the folder that contains `manage.py` and `render.yaml` (e.g. `Resume ATS Checker` if your repo root is one level up)
+4. Save → **Manual Deploy** → **Deploy latest commit**
+
+Or deploy **without** render.yaml: create a **Web Service** manually (not Blueprint), set Build Command to `./build.sh` and Start Command to `gunicorn config.wsgi:application`, and add env vars.
+
+---
+
 ### Notes
 
 - **Free tier**: Service sleeps after ~15 min of no traffic; first visit may take 30–60 seconds to wake up.
