@@ -22,59 +22,69 @@
                     {% endif %}
                 </div>
             </div>
+        </form>
 
-            <div class="card bg-card-bg shadow-sm border-0 mb-4">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <label class="form-label fw-bold text-white mb-0">Stored resumes – select to match</label>
-                        <div>
-                            <button type="button" class="btn btn-sm btn-outline-light" id="select-all">Select all</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary ms-1" id="deselect-all">Deselect all</button>
-                        </div>
+        <div class="card bg-card-bg shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                    <label class="form-label fw-bold text-white mb-0">Stored resumes – select to match or delete</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-light" id="select-all">Select all</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="deselect-all">Deselect all</button>
+                        <button type="submit" name="action" value="delete" form="match-stored-form" formnovalidate class="btn btn-sm btn-outline-danger" id="delete-selected" onclick="return confirm('Delete selected resumes?');" title="Delete selected">
+                            Delete selected
+                        </button>
                     </div>
-                    {% if form.resumes.errors %}
-                        <div class="text-danger small mb-2">{{ form.resumes.errors.0 }}</div>
-                    {% endif %}
-                    {% if stored_resumes %}
-                        <div class="row g-3">
-                            {% for r in stored_resumes %}
-                            <div class="col-md-6 col-lg-4">
-                                <label class="d-block mb-0 cursor-pointer rounded-3 p-3 border border-secondary border-opacity-25 hover-border-accent stored-resume-card" style="cursor: pointer; transition: border-color 0.2s, background 0.2s;">
+                </div>
+                {% if form.resumes.errors %}
+                    <div class="text-danger small mb-2">{{ form.resumes.errors.0 }}</div>
+                {% endif %}
+                {% if stored_resumes %}
+                    <div class="row g-3">
+                        {% for r in stored_resumes %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="stored-resume-card d-flex align-items-stretch rounded-3 p-3 border border-secondary border-opacity-25">
+                                <label class="d-block mb-0 flex-grow-1 cursor-pointer min-w-0" style="cursor: pointer;">
                                     <div class="form-check mb-0 d-flex align-items-start gap-2">
-                                        <input class="form-check-input mt-1 resume-cb" type="checkbox" name="resumes" value="{{ r.pk }}" id="resume-{{ r.pk }}">
+                                        <input class="form-check-input mt-1 resume-cb" type="checkbox" name="resumes" value="{{ r.pk }}" id="resume-{{ r.pk }}" form="match-stored-form">
                                         <div class="flex-grow-1 min-w-0">
-                                            <span class="fw-bold text-white d-block">{{ r.candidate_name|default:r.file.name }}</span>
-                                            <small class="text-secondary-c d-block">{{ r.file.name }}</small>
+                                            <span class="fw-bold text-white d-block text-truncate">{{ r.candidate_name|default:r.file.name }}</span>
+                                            <small class="text-secondary-c d-block text-truncate">{{ r.file.name }}</small>
                                             <small class="text-secondary-c">Uploaded {{ r.uploaded_at|date:"M d, Y" }}</small>
                                         </div>
                                     </div>
                                 </label>
+                                <form method="post" action="{% url 'delete_resume' r.pk %}" class="flex-shrink-0 align-self-center ms-1" onsubmit="return confirm('Delete this resume?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-link text-danger p-0 px-1" title="Delete" aria-label="Delete resume">&#10005;</button>
+                                </form>
                             </div>
-                            {% endfor %}
                         </div>
-                    {% else %}
-                        <div class="text-center py-5 text-secondary-c rounded-3" style="background: rgba(15,23,42,0.5);">
-                            <p class="mb-2">No stored resumes yet.</p>
-                            <a href="{% url 'bulk_upload' %}" class="btn btn-primary btn-sm">Bulk Upload</a>
-                            <span class="mx-2 text-secondary-c">or</span>
-                            <a href="{% url 'ai_filter' %}" class="btn btn-outline-light btn-sm">Upload &amp; scan in AI Filter</a>
-                        </div>
-                    {% endif %}
-                </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5 text-secondary-c rounded-3" style="background: rgba(15,23,42,0.5);">
+                        <p class="mb-2">No stored resumes yet.</p>
+                        <a href="{% url 'bulk_upload' %}" class="btn btn-primary btn-sm">Bulk Upload</a>
+                        <span class="mx-2 text-secondary-c">or</span>
+                        <a href="{% url 'ai_filter' %}" class="btn btn-outline-light btn-sm">Upload &amp; scan in AI Filter</a>
+                    </div>
+                {% endif %}
             </div>
+        </div>
 
-            {% if stored_resumes %}
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary btn-lg px-5">Run match &amp; quality check</button>
-                <a href="{% url 'bulk_upload' %}" class="btn btn-outline-light btn-lg">Bulk Upload more</a>
-            </div>
-            {% endif %}
-        </form>
+        {% if stored_resumes %}
+        <div class="d-flex flex-wrap gap-2">
+            <button type="submit" name="action" value="match" form="match-stored-form" class="btn btn-primary btn-lg px-5">Run match &amp; quality check</button>
+            <a href="{% url 'bulk_upload' %}" class="btn btn-outline-light btn-lg">Bulk Upload more</a>
+        </div>
+        {% endif %}
     </div>
 </div>
 
 <style>
 .stored-resume-card:hover { background: rgba(56, 189, 248, 0.06); border-color: rgba(56, 189, 248, 0.3) !important; }
+.stored-resume-card .btn-link.text-danger:hover { text-decoration: underline; }
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
