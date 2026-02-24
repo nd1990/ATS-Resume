@@ -43,20 +43,20 @@
                     <div class="row g-3">
                         {% for r in stored_resumes %}
                         <div class="col-md-6 col-lg-4">
-                            <div class="stored-resume-card d-flex align-items-stretch rounded-3 p-3 border border-secondary border-opacity-25">
-                                <label class="d-block mb-0 flex-grow-1 cursor-pointer min-w-0" style="cursor: pointer;">
+                            <div class="stored-resume-card d-flex align-items-start gap-2 rounded-3 p-3 border border-secondary border-opacity-25">
+                                <label class="d-block mb-0 flex-grow-1 cursor-pointer min-w-0 overflow-hidden" style="cursor: pointer;">
                                     <div class="form-check mb-0 d-flex align-items-start gap-2">
-                                        <input class="form-check-input mt-1 resume-cb" type="checkbox" name="resumes" value="{{ r.pk }}" id="resume-{{ r.pk }}" form="match-stored-form">
-                                        <div class="flex-grow-1 min-w-0">
+                                        <input class="form-check-input mt-1 resume-cb flex-shrink-0" type="checkbox" name="resumes" value="{{ r.pk }}" id="resume-{{ r.pk }}" form="match-stored-form">
+                                        <div class="flex-grow-1 min-w-0 overflow-hidden">
                                             <span class="fw-bold text-white d-block text-truncate">{{ r.candidate_name|default:r.file.name }}</span>
                                             <small class="text-secondary-c d-block text-truncate">{{ r.file.name }}</small>
                                             <small class="text-secondary-c">Uploaded {{ r.uploaded_at|date:"M d, Y" }}</small>
                                         </div>
                                     </div>
                                 </label>
-                                <form method="post" action="{% url 'delete_resume' r.pk %}" class="flex-shrink-0 align-self-center ms-1" onsubmit="return confirm('Delete this resume?');">
+                                <form method="post" action="{% url 'delete_resume' r.pk %}" class="flex-shrink-0 pt-1" onsubmit="return confirm('Delete this resume?');">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-link text-danger p-0 px-1" title="Delete" aria-label="Delete resume">&#10005;</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 1.75rem; height: 1.75rem;" title="Delete" aria-label="Delete resume">&#10005;</button>
                                 </form>
                             </div>
                         </div>
