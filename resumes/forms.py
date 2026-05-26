@@ -39,12 +39,24 @@ class CandidateStatusUpdateForm(forms.ModelForm):
 class JDResumeAnalysisForm(forms.Form):
     job_description = forms.CharField(
         label="Job Description",
+        required=False,
         widget=forms.Textarea(
             attrs={
                 "rows": 6,
                 "placeholder": "Paste the job description here",
                 "class": "form-control bg-card-bg text-white",
                 "style": "resize: vertical;",
+            }
+        ),
+    )
+    jd_file = forms.FileField(
+        label="Or Upload JD File",
+        required=False,
+        help_text="Upload the JD as PDF, DOCX, JPG or PNG.",
+        widget=forms.ClearableFileInput(
+            attrs={
+                "class": "form-control",
+                "accept": ".pdf,.docx,.png,.jpg,.jpeg",
             }
         ),
     )
@@ -59,11 +71,20 @@ class JDResumeAnalysisForm(forms.Form):
         ),
     )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        jd_text = (cleaned_data.get('job_description') or '').strip()
+        jd_file = cleaned_data.get('jd_file')
+        if not jd_text and not jd_file:
+            raise forms.ValidationError("Please paste a job description or upload a JD file.")
+        return cleaned_data
+
 
 class AIFilterBatchForm(forms.Form):
     """Batch upload: one JD + multiple resumes for AI filter & quality check."""
     job_description = forms.CharField(
         label="Job Description",
+        required=False,
         widget=forms.Textarea(
             attrs={
                 "rows": 5,
@@ -73,18 +94,56 @@ class AIFilterBatchForm(forms.Form):
             }
         ),
     )
+    jd_file = forms.FileField(
+        label="Or Upload JD File",
+        required=False,
+        help_text="Upload the JD as PDF, DOCX, JPG or PNG.",
+        widget=forms.ClearableFileInput(
+            attrs={
+                "class": "form-control",
+                "accept": ".pdf,.docx,.png,.jpg,.jpeg",
+            }
+        ),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        jd_text = (cleaned_data.get('job_description') or '').strip()
+        jd_file = cleaned_data.get('jd_file')
+        if not jd_text and not jd_file:
+            raise forms.ValidationError("Please paste a job description or upload a JD file.")
+        return cleaned_data
 
 
 class MatchStoredForm(forms.Form):
     """Match stored resumes with a JD: paste JD + select which stored resumes to run QA on."""
+    saved_jd = forms.ModelChoiceField(
+        queryset=JobRequirement.objects.filter(is_template=True),
+        label="Select Saved JD",
+        help_text="Pick a previously saved JD to reuse.",
+        empty_label="-- Use a new JD below --",
+        required=False,
+    )
     job_description = forms.CharField(
         label="Job Description",
+        required=False,
         widget=forms.Textarea(
             attrs={
                 "rows": 5,
                 "placeholder": "Paste the job description. Stored resumes will be matched against specs, certificates, and requirements.",
                 "class": "form-control bg-card-bg text-white",
                 "style": "resize: vertical;",
+            }
+        ),
+    )
+    jd_file = forms.FileField(
+        label="Or Upload JD File",
+        required=False,
+        help_text="Upload the JD as PDF, DOCX, JPG or PNG.",
+        widget=forms.ClearableFileInput(
+            attrs={
+                "class": "form-control",
+                "accept": ".pdf,.docx,.png,.jpg,.jpeg",
             }
         ),
     )
@@ -99,3 +158,11 @@ class MatchStoredForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['resumes'].queryset = Resume.objects.all().order_by('-uploaded_at')
 
+    def clean(self):
+        cleaned_data = super().clean()
+        saved_jd = cleaned_data.get('saved_jd')
+        jd_text = (cleaned_data.get('job_description') or '').strip()
+        jd_file = cleaned_data.get('jd_file')
+        if not saved_jd and not jd_text and not jd_file:
+            raise forms.ValidationError("Select a saved JD OR paste a job description / upload a JD file.")
+        return cleaned_data

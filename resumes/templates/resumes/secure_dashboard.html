@@ -65,19 +65,94 @@
                     <span class="badge bg-primary bg-gradient">AI Match</span>
                 </div>
                 <p class="text-secondary-c small mb-3">
-                    Paste the job description and the candidate’s updated resume to generate a detailed AI-driven match summary.
+                    Paste the job description and the candidate's updated resume to generate a detailed AI-driven match
+                    summary.
                 </p>
-                <form method="post" enctype="multipart/form-data" novalidate class="mt-2">
+                <form method="post" enctype="multipart/form-data" novalidate class="mt-2" id="sd-analysis-form">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label class="form-label">{{ analysis_form.job_description.label }}</label>
-                        {{ analysis_form.job_description }}
+                        <label class="form-label">Job Description</label>
+
+                        {% if analysis_form.non_field_errors %}
+                        <div class="alert alert-danger py-2 small mb-2">{{ analysis_form.non_field_errors.0 }}</div>
+                        {% endif %}
+
+                        {# Tab switcher #}
+                        <div class="d-flex gap-0 mb-2 rounded-3 overflow-hidden"
+                            style="border: 1px solid rgba(255,255,255,0.1); width: fit-content;">
+                            <button type="button" class="jd-tab-btn active" id="sd-tab-file"
+                                onclick="switchSDTab('file')">
+                                &#8593; Upload File
+                            </button>
+                            <button type="button" class="jd-tab-btn" id="sd-tab-paste" onclick="switchSDTab('paste')">
+                                &#128203; Paste Text
+                            </button>
+                            <button type="button" class="jd-tab-btn" id="sd-tab-jd-link" onclick="switchSDTab('jd-link')">
+                                &#128279; JD Link
+                            </button>
+                        </div>
+
+                        {# Upload File Panel — shown by default #}
+                        <div id="sd-panel-file">
+                            <div class="jd-upload-zone" id="sd-drop-zone">
+                                <p class="jd-upload-icon mb-1">&#8679;</p>
+                                <p class="jd-upload-text">Drag &amp; drop JD file, or</p>
+                                <label for="id_jd_file" class="btn btn-sm mt-1 mb-1"
+                                    style="cursor:pointer; border: 1px solid rgba(56,189,248,0.5); color: #38bdf8; background: transparent;">Browse</label>
+                                {{ analysis_form.jd_file }}
+                                <p class="jd-upload-hint">PDF, DOCX, JPG or PNG</p>
+                                <div id="sd-jd-file-name" class="jd-file-chosen" style="display:none;"></div>
+                            </div>
+                        </div>
+                        {# Paste Text Panel — hidden by default #}
+                        <div id="sd-panel-paste" style="display:none;">
+                            {{ analysis_form.job_description }}
+                        </div>
+                        {# JD Link Panel — hidden by default #}
+                        <div id="sd-panel-jd-link" style="display:none;">
+                            <div class="rounded-3 p-3"
+                                style="background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.15);">
+                                <div class="d-flex gap-2 align-items-start mb-2">
+                                    <div class="flex-grow-1">
+                                        <input type="url" id="sd-jd-link-input"
+                                            class="form-control form-control-sm bg-dark text-white border-secondary"
+                                            placeholder="https://www.linkedin.com/jobs/view/...">
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-primary" id="sd-fetch-url-btn"
+                                        onclick="sdFetchJDFromURL()">
+                                        <span id="sd-fetch-url-btn-text">&#128269; Fetch</span>
+                                    </button>
+                                </div>
+                                <p class="text-secondary-c small mb-0">
+                                    Paste a job posting link. We'll extract the JD text automatically.
+                                </p>
+                                <div id="sd-url-fetch-status" class="mt-2" style="display:none;"></div>
+                                <div id="sd-url-fetched-preview" class="mt-2" style="display:none;">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <span class="fw-bold text-white small" id="sd-url-title-label"></span>
+                                        <span class="auto-badge" style="font-size:0.6rem;">&#10003; Loaded</span>
+                                    </div>
+                                    <textarea id="sd-url-jd-preview"
+                                        class="form-control form-control-sm bg-dark text-white border-secondary" rows="4"
+                                        readonly style="font-size:0.75rem;resize:vertical;opacity:0.8;"></textarea>
+                                    <div class="mt-1 d-flex gap-1">
+                                        <button type="button" class="btn btn-sm btn-outline-info" style="font-size:0.72rem;"
+                                            onclick="sdEditURLFetchedJD()">&#9998; Edit</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:0.72rem;"
+                                            onclick="sdClearURLFetchedJD()">&#10005; Clear</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">{{ analysis_form.candidate_file.label }}</label>
                         {{ analysis_form.candidate_file }}
                         {% if analysis_form.candidate_file.help_text %}
                         <div class="form-text">{{ analysis_form.candidate_file.help_text }}</div>
+                        {% endif %}
+                        {% if analysis_form.candidate_file.errors %}
+                        <div class="text-danger small mt-1">{{ analysis_form.candidate_file.errors.0 }}</div>
                         {% endif %}
                     </div>
                     <button type="submit" class="btn btn-primary w-100">Run Analysis</button>
@@ -92,19 +167,14 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h4 class="card-title mb-0 text-accent">Quality Assurance Report</h4>
-                    <span class="badge rounded-pill fs-6 px-3 py-2
-                        {% if analysis_result.qa_grade == 'A' %}bg-success
-                        {% elif analysis_result.qa_grade == 'B' %}bg-info
-                        {% elif analysis_result.qa_grade == 'C' %}bg-warning text-dark
-                        {% else %}bg-danger{% endif %}">
-                        Grade {{ analysis_result.qa_grade }}
-                    </span>
+
                 </div>
                 <p class="text-secondary-c small mb-3">
-                    Resume stored and matched against JD. All checks: document quality, skills, experience, certificates, compliance, risk.
+                    Resume stored and matched against JD. All checks: skills, experience &amp; certifications.
                 </p>
 
-                <div class="mb-3 p-3 rounded" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2);">
+                <div class="mb-3 p-3 rounded"
+                    style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2);">
                     <span class="text-secondary-c small d-block mb-1">Document stored</span>
                     <span class="text-white fw-bold">{{ analysis_result.stored_resume_name }}</span>
                     <small class="text-secondary-c d-block">{{ analysis_result.stored_file_name }}</small>
@@ -119,63 +189,39 @@
                         <div class="progress-bar
                             {% if analysis_result.final_weighted_score >= 80 %}bg-success
                             {% elif analysis_result.final_weighted_score >= 55 %}bg-warning
-                            {% else %}bg-danger{% endif %}"
-                            role="progressbar"
+                            {% else %}bg-danger{% endif %}" role="progressbar"
                             style="width: {{ analysis_result.final_weighted_score }}%;"
-                            aria-valuenow="{{ analysis_result.final_weighted_score }}"
-                            aria-valuemin="0"
+                            aria-valuenow="{{ analysis_result.final_weighted_score }}" aria-valuemin="0"
                             aria-valuemax="100">
                         </div>
                     </div>
                 </div>
 
                 <div class="small mb-3">
-                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
-                        <span class="text-secondary-c">Document quality</span>
-                        <span class="text-white">{{ analysis_result.document_quality_score }}% – {{ analysis_result.document_quality_label }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
+                    <div
+                        class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
                         <span class="text-secondary-c">Skill match</span>
                         <span class="text-accent">{{ analysis_result.skill_match_percentage }}%</span>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
-                        <span class="text-secondary-c">Experience match</span>
-                        <span class="text-accent">{{ analysis_result.experience_match_score }}%</span>
+                    <div
+                        class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-secondary-c">Experience</span>
+                        <span class="text-accent">
+                            {% if analysis_result.resume_experience_years %}{{ analysis_result.resume_experience_years }} yr{% if analysis_result.resume_experience_years > 1 %}s{% endif %}{% else %}-{% endif %}
+                            {% if analysis_result.jd_experience_years %}<small class="d-block text-secondary-c" style="font-size:0.65rem;">JD requires {{ analysis_result.jd_experience_years }}+</small>{% endif %}
+                        </span>
                     </div>
                     <div class="py-2 border-bottom border-secondary border-opacity-25">
                         <span class="text-secondary-c d-block mb-1">Experience note</span>
                         <span class="text-white">{{ analysis_result.experience_notes }}</span>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
+                    <div
+                        class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
                         <span class="text-secondary-c">Certifications</span>
                         <span class="text-white">{{ analysis_result.certification_status }}</span>
                     </div>
                     <div class="py-2 border-bottom border-secondary border-opacity-25">
                         <span class="text-secondary-c small">{{ analysis_result.certification_details }}</span>
-                    </div>
-                    <div class="py-2 border-bottom border-secondary border-opacity-25">
-                        <span class="text-secondary-c d-block mb-1">Compliance</span>
-                        {% if analysis_result.compliance_issues %}
-                            <ul class="mb-0 ps-3 text-white small">
-                                {% for issue in analysis_result.compliance_issues %}
-                                <li>{{ issue }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <span class="text-success small">No major compliance gaps detected.</span>
-                        {% endif %}
-                    </div>
-                    <div class="py-2">
-                        <span class="text-secondary-c d-block mb-1">Risk flags</span>
-                        {% if analysis_result.risk_flags %}
-                            <ul class="mb-0 ps-3 text-warning small">
-                                {% for flag in analysis_result.risk_flags %}
-                                <li>{{ flag }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <span class="text-success small">No explicit risk indicators found.</span>
-                        {% endif %}
                     </div>
                 </div>
 
@@ -189,7 +235,8 @@
                         {{ analysis_result.recommendation }}
                     </span>
                 </div>
-                <div class="p-3 rounded text-white" style="background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.08);">
+                <div class="p-3 rounded text-white"
+                    style="background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.08);">
                     <span class="text-accent small d-block mb-1">QA verdict</span>
                     <strong>{{ analysis_result.qa_verdict }}</strong>
                 </div>
@@ -198,10 +245,278 @@
         {% else %}
         <div class="card bg-card-bg shadow-sm h-100 d-flex align-items-center justify-content-center">
             <div class="card-body text-center text-secondary-c">
-                <p class="mb-0">Upload a resume and paste the JD, then run analysis. The resume will be stored and you’ll get a full QA report: document quality, skills, experience, certificates, compliance, risk, and a grade.</p>
+                <p class="mb-0">Upload a resume and paste the JD, then run analysis. The resume will be stored and
+                    you'll get a full QA report: skills, experience, certificates, and a final verdict.</p>
             </div>
         </div>
         {% endif %}
     </div>
 </div>
+
+<style>
+    .jd-tab-btn {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.45);
+        padding: 0.4rem 0.85rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .jd-tab-btn.active {
+        background: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+    }
+
+    .jd-tab-btn:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .jd-tab-btn#sd-tab-jd-link {
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .jd-upload-zone {
+        border: 2px dashed rgba(56, 189, 248, 0.25);
+        border-radius: 10px;
+        padding: 1.75rem 1.5rem;
+        text-align: center;
+        transition: border-color 0.25s, background 0.25s;
+        background: rgba(56, 189, 248, 0.03);
+        cursor: default;
+    }
+
+    .jd-upload-zone.dragover {
+        border-color: #38bdf8;
+        background: rgba(56, 189, 248, 0.08);
+    }
+
+    .jd-upload-icon {
+        color: rgba(56, 189, 248, 0.6);
+        font-size: 1.8rem;
+    }
+
+    .jd-upload-text {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.85rem;
+        margin-bottom: 0;
+    }
+
+    .jd-upload-hint {
+        color: rgba(255, 255, 255, 0.28);
+        font-size: 0.72rem;
+        margin-top: 0.35rem;
+        margin-bottom: 0;
+    }
+
+    .jd-file-chosen {
+        margin-top: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        background: rgba(56, 189, 248, 0.1);
+        border-radius: 6px;
+        color: #38bdf8;
+        font-size: 0.78rem;
+        display: inline-block;
+    }
+
+    #id_jd_file {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .auto-badge {
+        background: rgba(56,189,248,0.12);
+        color: #38bdf8;
+        border: 1px solid rgba(56,189,248,0.3);
+        border-radius: 20px;
+        font-size: 0.68rem;
+        font-weight: 600;
+        padding: 0.15rem 0.55rem;
+    }
+
+    .fetch-status-ok {
+        background: rgba(74, 222, 128, 0.1);
+        border: 1px solid rgba(74, 222, 128, 0.3);
+        color: #4ade80;
+        border-radius: 6px;
+        padding: .35rem .6rem;
+        font-size: .75rem;
+    }
+
+    .fetch-status-err {
+        background: rgba(248, 113, 113, 0.1);
+        border: 1px solid rgba(248, 113, 113, 0.3);
+        color: #f87171;
+        border-radius: 6px;
+        padding: .35rem .6rem;
+        font-size: .75rem;
+    }
+
+    .fetch-status-loading {
+        background: rgba(56, 189, 248, 0.08);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        color: #38bdf8;
+        border-radius: 6px;
+        padding: .35rem .6rem;
+        font-size: .75rem;
+    }
+</style>
+
+<script>
+    var _sdActiveTab = 'file';
+    var _sdUrlFetchedJDText = '';
+    var CSRF_TOKEN = '{{ csrf_token }}';
+    var FETCH_JD_FROM_URL = '{% url "fetch_jd_from_url_ajax" %}';
+
+    function switchSDTab(tab) {
+        var panels = { file: 'sd-panel-file', paste: 'sd-panel-paste', 'jd-link': 'sd-panel-jd-link' };
+        var tabs = { file: 'sd-tab-file', paste: 'sd-tab-paste', 'jd-link': 'sd-tab-jd-link' };
+
+        _sdActiveTab = tab;
+
+        Object.keys(panels).forEach(function (k) {
+            var el = document.getElementById(panels[k]);
+            if (el) el.style.display = (k === tab) ? '' : 'none';
+            var btn = document.getElementById(tabs[k]);
+            if (btn) btn.classList.toggle('active', k === tab);
+        });
+
+        var jdTextarea = document.getElementById('sd-panel-paste') ? document.getElementById('sd-panel-paste').querySelector('textarea') : null;
+        var jdFileInput = document.getElementById('id_jd_file');
+        if (tab === 'paste') {
+            if (jdFileInput) jdFileInput.value = '';
+            _sdUrlFetchedJDText = '';
+        } else if (tab === 'file') {
+            if (jdTextarea) jdTextarea.value = '';
+            _sdUrlFetchedJDText = '';
+        } else if (tab === 'jd-link') {
+            if (jdFileInput) jdFileInput.value = '';
+            if (jdTextarea) jdTextarea.value = '';
+        }
+    }
+
+    function sdFetchJDFromURL() {
+        var url = (document.getElementById('sd-jd-link-input').value || '').trim();
+        if (!url) {
+            sdSetURLFetchStatus('error', 'Please enter a URL.');
+            return;
+        }
+
+        sdSetURLFetchStatus('loading', '&#9203; Fetching&hellip;');
+        document.getElementById('sd-fetch-url-btn-text').innerHTML = '&#9203;';
+        document.getElementById('sd-fetch-url-btn').disabled = true;
+        document.getElementById('sd-url-fetched-preview').style.display = 'none';
+
+        var fd = new FormData();
+        fd.append('jd_url', url);
+        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+        fetch(FETCH_JD_FROM_URL, { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                document.getElementById('sd-fetch-url-btn-text').innerHTML = '&#128269; Fetch';
+                document.getElementById('sd-fetch-url-btn').disabled = false;
+
+                if (!data.ok) {
+                    sdSetURLFetchStatus('error', '&#10005; ' + (data.error || 'Could not extract JD.'));
+                    return;
+                }
+
+                _sdUrlFetchedJDText = data.description || '';
+
+                var preview = document.getElementById('sd-url-fetched-preview');
+                document.getElementById('sd-url-title-label').textContent = data.title || 'Job Description';
+                document.getElementById('sd-url-jd-preview').value = _sdUrlFetchedJDText;
+                preview.style.display = '';
+
+                var escTitle = String(data.title || url).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                sdSetURLFetchStatus('ok', '&#10003; Loaded: <strong>' + escTitle + '</strong>');
+            })
+            .catch(function () {
+                document.getElementById('sd-fetch-url-btn-text').innerHTML = '&#128269; Fetch';
+                document.getElementById('sd-fetch-url-btn').disabled = false;
+                sdSetURLFetchStatus('error', '&#10005; Network error.');
+            });
+    }
+
+    function sdSetURLFetchStatus(type, html) {
+        var el = document.getElementById('sd-url-fetch-status');
+        el.className = 'mt-2 fetch-status-' + (type === 'ok' ? 'ok' : type === 'error' ? 'err' : 'loading');
+        el.innerHTML = html;
+        el.style.display = '';
+    }
+
+    function sdEditURLFetchedJD() {
+        var ta = document.getElementById('sd-panel-paste') ? document.getElementById('sd-panel-paste').querySelector('textarea') : null;
+        if (ta) ta.value = _sdUrlFetchedJDText;
+        switchSDTab('paste');
+    }
+
+    function sdClearURLFetchedJD() {
+        _sdUrlFetchedJDText = '';
+        document.getElementById('sd-url-fetched-preview').style.display = 'none';
+        document.getElementById('sd-url-fetch-status').style.display = 'none';
+        document.getElementById('sd-jd-link-input').value = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var jdFileInput = document.getElementById('id_jd_file');
+        var fileNameDiv = document.getElementById('sd-jd-file-name');
+        if (jdFileInput && fileNameDiv) {
+            jdFileInput.addEventListener('change', function () {
+                if (this.files && this.files[0]) {
+                    fileNameDiv.textContent = '✓ ' + this.files[0].name;
+                    fileNameDiv.style.display = 'inline-block';
+                } else {
+                    fileNameDiv.style.display = 'none';
+                }
+            });
+        }
+        var dropZone = document.getElementById('sd-drop-zone');
+        if (dropZone && jdFileInput) {
+            dropZone.addEventListener('click', function (e) {
+                if (e.target.tagName !== 'LABEL') jdFileInput.click();
+            });
+            dropZone.addEventListener('dragover', function (e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', function () { dropZone.classList.remove('dragover'); });
+            dropZone.addEventListener('drop', function (e) {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    var dt = new DataTransfer();
+                    dt.items.add(e.dataTransfer.files[0]);
+                    jdFileInput.files = dt.files;
+                    fileNameDiv.textContent = '✓ ' + e.dataTransfer.files[0].name;
+                    fileNameDiv.style.display = 'inline-block';
+                    switchSDTab('file');
+                }
+            });
+        }
+
+        // JD Link input: allow pressing Enter to fetch
+        var jli = document.getElementById('sd-jd-link-input');
+        if (jli) {
+            jli.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); sdFetchJDFromURL(); }
+            });
+        }
+
+        // Before form submit, sync the URL-fetched JD text into the textarea
+        var form = document.getElementById('sd-analysis-form');
+        if (form) {
+            form.addEventListener('submit', function () {
+                if (_sdActiveTab === 'jd-link' && _sdUrlFetchedJDText) {
+                    var ta = document.getElementById('sd-panel-paste') ? document.getElementById('sd-panel-paste').querySelector('textarea') : null;
+                    if (ta) ta.value = _sdUrlFetchedJDText;
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

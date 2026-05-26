@@ -1,0 +1,628 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+
+{# ── Bulk delete form wraps everything ── #}
+<form method="post" action="{% url 'bulk_delete_scan_runs' %}" id="bulk-delete-form">
+    {% csrf_token %}
+
+    {# ── Page Header ── #}
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="mb-1 text-accent">&#128197; Scan History</h2>
+            <p class="text-secondary-c small mb-0">All past scans grouped by Job Description. {{ total_runs }} total
+                scan run{{ total_runs|pluralize }}.</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            {% if grouped_list %}
+            <button type="button" class="btn btn-outline-secondary rounded-pill btn-sm" id="select-all-btn"
+                onclick="selectAll()">
+                &#9745; Select All
+            </button>
+            <button type="button" class="btn btn-outline-secondary rounded-pill btn-sm" id="deselect-all-btn"
+                onclick="deselectAll()" style="display:none;">
+                &#9744; Deselect All
+            </button>
+            <button type="button" class="btn-delete-all rounded-pill btn-sm" onclick="deleteAll()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                    style="margin-right:5px;vertical-align:-2px;">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete All
+            </button>
+            {% endif %}
+            <a href="{% url 'match_stored' %}" class="btn btn-outline-light rounded-pill">Match Stored</a>
+
+        </div>
+    </div>
+
+    {% if grouped_list %}
+    {% for jd_title, runs in grouped_list %}
+    <div class="jd-group mb-5">
+
+        {# ── JD Group Header ── #}
+        <div class="jd-group-header d-flex align-items-center gap-3 mb-3">
+            <div class="jd-icon-badge">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <div>
+                <h4 class="mb-0 text-white fw-bold">{{ jd_title }}</h4>
+                <small class="text-secondary-c">{{ runs|length }} scan run{{ runs|length|pluralize }}</small>
+            </div>
+            <div class="ms-auto d-flex gap-2 align-items-center">
+                <span class="badge rounded-pill px-3 py-2"
+                    style="background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.25);font-size:0.78rem;">
+                    {{ runs|length }} run{{ runs|length|pluralize }}
+                </span>
+            </div>
+        </div>
+
+        {# ── Runs for this JD ── #}
+        <div class="row g-3">
+            {% for item in runs %}
+            <div class="col-12">
+                <div class="scan-run-card card border-0 shadow-sm" id="card-{{ item.run.pk }}">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+
+                            {# Checkbox ── #}
+                            <div class="cb-wrapper flex-shrink-0">
+                                <label class="custom-cb" for="cb-{{ item.run.pk }}" title="Select to delete">
+                                    <input type="checkbox" class="run-checkbox" name="scan_run_ids"
+                                        value="{{ item.run.pk }}" id="cb-{{ item.run.pk }}"
+                                        onchange="onCheckboxChange()">
+                                    <span class="cb-box">
+                                        <svg class="cb-check" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                            <polyline points="1.5,6 4.5,9 10.5,3" stroke="white" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </span>
+                                </label>
+                            </div>
+
+                            {# Left: Date + Stats #}
+                            <div class="d-flex align-items-start gap-4 flex-wrap flex-grow-1">
+                                <div>
+                                    <div class="text-secondary-c small mb-1">&#128197; {{ item.run.created_at|date:"M d, Y" }} &bull; {{ item.run.created_at|date:"H:i" }}</div>
+                                    <div class="fw-bold text-white">{{ item.total }} candidate{{ item.total|pluralize }} scanned</div>
+                                </div>
+                                <div class="d-flex gap-3 flex-wrap">
+                                    <div class="stat-badge stat-hire">
+                                        <span class="stat-dot"></span>
+                                        <span>{{ item.hired }} Hire</span>
+                                    </div>
+                                    <div class="stat-badge stat-hold">
+                                        <span class="stat-dot"></span>
+                                        <span>{{ item.held }} Hold</span>
+                                    </div>
+                                    <div class="stat-badge stat-reject">
+                                        <span class="stat-dot"></span>
+                                        <span>{{ item.rejected }} Reject</span>
+                                    </div>
+                                </div>
+                                {% if item.avg_score %}
+                                <div class="text-center">
+                                    <div
+                                        class="avg-score-value
+                                        {% if item.avg_score >= 80 %}text-success{% elif item.avg_score >= 55 %}text-warning{% else %}text-danger{% endif %}">
+                                        {{ item.avg_score }}%
+                                    </div>
+                                    <small class="text-secondary-c">Avg Score</small>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            {# Right: Top Candidate + Actions #}
+                            <div class="d-flex align-items-center gap-3 flex-wrap">
+                                {% if item.top_candidate %}
+                                <div class="top-candidate-pill">
+                                    <span class="top-star">&#11088;</span>
+                                    <span class="top-name">{{ item.top_candidate.candidate_name }}</span>
+                                    <span
+                                        class="top-score
+                                        {% if item.top_candidate.final_weighted_score >= 80 %}text-success{% elif item.top_candidate.final_weighted_score >= 55 %}text-warning{% else %}text-danger{% endif %}">
+                                        {{ item.top_candidate.final_weighted_score }}%
+                                    </span>
+                                </div>
+                                {% endif %}
+                                <a href="{% url 'filter_results' item.run.pk %}"
+                                    class="btn btn-sm btn-primary rounded-pill px-3">
+                                    View Results
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2"
+                                    title="Delete this scan run"
+                                    onclick="deleteOne({{ item.run.pk }})">&#128465;</button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div class="text-center py-5">
+        <div class="empty-icon mb-4">
+            <svg width="64" height="64" fill="none" stroke="rgba(56,189,248,0.4)" stroke-width="1.5"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        </div>
+        <h4 class="text-white mb-2">No scan history yet</h4>
+        <p class="text-secondary-c mb-4">Run your first AI scan to see results here, grouped by Job Description.</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'match_stored' %}" class="btn btn-primary rounded-pill">Match Stored Resumes</a>
+
+        </div>
+    </div>
+    {% endif %}
+
+</form>{# end bulk-delete-form #}
+
+{# ── Floating action bar (shown when items are checked) ── #}
+<div id="bulk-action-bar" class="bulk-action-bar" style="display:none;">
+    <div class="bulk-action-inner">
+        <div class="bulk-action-left">
+            <div class="bulk-action-icon">&#128465;</div>
+            <div>
+                <div class="bulk-action-count"><span id="selected-count">0</span> scan run<span id="plural-s">s</span>
+                    selected</div>
+                <div class="bulk-action-hint">This will permanently delete them and all their results.</div>
+            </div>
+        </div>
+        <div class="bulk-action-right">
+            <button type="button" class="btn-bulk-cancel" onclick="deselectAll()">Cancel</button>
+            <button type="button" class="btn-bulk-delete" onclick="confirmBulkDelete()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                    class="me-1">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete Selected
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ── Checkbox ── */
+    .cb-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .custom-cb {
+        cursor: pointer;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .custom-cb input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .cb-box {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid rgba(255, 255, 255, 0.18);
+        background: rgba(15, 23, 42, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.18s ease;
+        flex-shrink: 0;
+    }
+
+    .custom-cb:hover .cb-box {
+        border-color: rgba(248, 113, 113, 0.6);
+        background: rgba(248, 113, 113, 0.05);
+    }
+
+    .custom-cb input:checked+.cb-box {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    }
+
+    .cb-check {
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+
+    .custom-cb input:checked+.cb-box .cb-check {
+        opacity: 1;
+    }
+
+    /* ── Card selected state ── */
+    .scan-run-card.is-selected {
+        border-color: rgba(239, 68, 68, 0.35) !important;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.06) 0%, rgba(15, 23, 42, 0.85) 100%) !important;
+        box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2) !important;
+    }
+
+    /* ── JD Group Header ── */
+    .jd-group-header {
+        padding: 0.85rem 1.25rem;
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.10) 0%, rgba(99, 102, 241, 0.08) 100%);
+        border: 1px solid rgba(56, 189, 248, 0.20);
+        border-left: 3px solid #38bdf8;
+        border-radius: 0 12px 12px 0;
+        box-shadow: 0 2px 12px rgba(56, 189, 248, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        position: relative;
+    }
+
+    .jd-group-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 3px;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(56, 189, 248, 0.3), transparent 80%);
+    }
+
+    .jd-icon-badge {
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.20), rgba(99, 102, 241, 0.15));
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #38bdf8;
+        flex-shrink: 0;
+        box-shadow: 0 0 8px rgba(56, 189, 248, 0.15);
+    }
+
+    /* ── Scan Run Card ── */
+    .scan-run-card {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.8) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
+        border-radius: 14px !important;
+        transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s, background 0.2s;
+    }
+
+    .scan-run-card:hover {
+        border-color: rgba(56, 189, 248, 0.2) !important;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(56, 189, 248, 0.08) !important;
+        transform: translateY(-1px);
+    }
+
+    /* ── Stats ── */
+    .stat-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.82rem;
+        font-weight: 500;
+        padding: 0.3rem 0.75rem;
+        border-radius: 20px;
+    }
+
+    .stat-badge .stat-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .stat-hire {
+        background: rgba(74, 222, 128, 0.1);
+        color: #4ade80;
+        border: 1px solid rgba(74, 222, 128, 0.2);
+    }
+
+    .stat-hire .stat-dot {
+        background: #4ade80;
+    }
+
+    .stat-hold {
+        background: rgba(251, 191, 36, 0.1);
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.2);
+    }
+
+    .stat-hold .stat-dot {
+        background: #fbbf24;
+    }
+
+    .stat-reject {
+        background: rgba(248, 113, 113, 0.1);
+        color: #f87171;
+        border: 1px solid rgba(248, 113, 113, 0.2);
+    }
+
+    .stat-reject .stat-dot {
+        background: #f87171;
+    }
+
+    .avg-score-value {
+        font-size: 1.4rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    /* ── Top Candidate ── */
+    .top-candidate-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(245, 158, 11, 0.08);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        border-radius: 20px;
+        padding: 0.3rem 0.9rem;
+        font-size: 0.82rem;
+    }
+
+    .top-star {
+        color: #f59e0b;
+        font-size: 0.85rem;
+    }
+
+    .top-name {
+        color: #f8fafc;
+        font-weight: 600;
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .top-score {
+        font-weight: 700;
+        margin-left: 0.2rem;
+    }
+
+    .empty-icon {
+        opacity: 0.8;
+    }
+
+    /* ── Delete All Button ── */
+    .btn-delete-all {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(239, 68, 68, 0.12);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.35);
+        padding: 0.35rem 1rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-delete-all:hover {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+        transform: translateY(-1px);
+    }
+
+    /* ── Floating Bulk Action Bar ── */
+    .bulk-action-bar {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1050;
+        width: min(700px, calc(100vw - 2rem));
+        animation: barSlideUp 0.3s cubic-bezier(.22, 1, .36, 1);
+    }
+
+    @keyframes barSlideUp {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    }
+
+    .bulk-action-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(239, 68, 68, 0.1), 0 0 30px rgba(239, 68, 68, 0.08);
+        backdrop-filter: blur(20px);
+    }
+
+    .bulk-action-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .bulk-action-icon {
+        width: 2.6rem;
+        height: 2.6rem;
+        border-radius: 10px;
+        background: rgba(239, 68, 68, 0.12);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .bulk-action-count {
+        color: #f8fafc;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+
+    .bulk-action-hint {
+        color: rgba(148, 163, 184, 0.7);
+        font-size: 0.75rem;
+        margin-top: 0.1rem;
+    }
+
+    .bulk-action-right {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .btn-bulk-cancel {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(148, 163, 184, 0.8);
+        padding: 0.55rem 1.2rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-bulk-cancel:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #f8fafc;
+    }
+
+    .btn-bulk-delete {
+        display: inline-flex;
+        align-items: center;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 0.6rem 1.4rem;
+        border-radius: 50px;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-bulk-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(239, 68, 68, 0.5);
+    }
+</style>
+
+<script>
+    function onCheckboxChange() {
+        var checkboxes = document.querySelectorAll('.run-checkbox');
+        var bar = document.getElementById('bulk-action-bar');
+        var countEl = document.getElementById('selected-count');
+        var pluralS = document.getElementById('plural-s');
+        var selectBtn = document.getElementById('select-all-btn');
+        var deselectBtn = document.getElementById('deselect-all-btn');
+
+        var checked = Array.from(checkboxes).filter(cb => cb.checked);
+        var count = checked.length;
+
+        // Update card highlight
+        checkboxes.forEach(cb => {
+            var card = document.getElementById('card-' + cb.value);
+            if (card) {
+                if (cb.checked) card.classList.add('is-selected');
+                else card.classList.remove('is-selected');
+            }
+        });
+
+        // Show/hide bar
+        if (count > 0) {
+            bar.style.display = 'block';
+            countEl.textContent = count;
+            pluralS.textContent = count === 1 ? '' : 's';
+        } else {
+            bar.style.display = 'none';
+        }
+
+        // Toggle select/deselect all button
+        var allChecked = count === checkboxes.length;
+        if (selectBtn) selectBtn.style.display = allChecked ? 'none' : '';
+        if (deselectBtn) deselectBtn.style.display = allChecked ? '' : 'none';
+    }
+
+    function selectAll() {
+        document.querySelectorAll('.run-checkbox').forEach(cb => { cb.checked = true; });
+        onCheckboxChange();
+    }
+
+    function deselectAll() {
+        document.querySelectorAll('.run-checkbox').forEach(cb => { cb.checked = false; });
+        onCheckboxChange();
+        document.getElementById('bulk-action-bar').style.display = 'none';
+        var selectBtn = document.getElementById('select-all-btn');
+        var deselectBtn = document.getElementById('deselect-all-btn');
+        if (selectBtn) selectBtn.style.display = '';
+        if (deselectBtn) deselectBtn.style.display = 'none';
+    }
+
+    function deleteAll() {
+        var checkboxes = document.querySelectorAll('.run-checkbox');
+        var count = checkboxes.length;
+        if (count === 0) return;
+        // Select all first
+        checkboxes.forEach(cb => { cb.checked = true; });
+        onCheckboxChange();
+        // Then immediately confirm and submit
+        if (confirm('Delete ALL ' + count + ' scan run' + (count === 1 ? '' : 's') + ' and all their results? This cannot be undone.')) {
+            document.getElementById('bulk-delete-form').submit();
+        } else {
+            // User cancelled — deselect all
+            deselectAll();
+        }
+    }
+
+    function confirmBulkDelete() {
+        var count = document.querySelectorAll('.run-checkbox:checked').length;
+        if (count === 0) return;
+        if (confirm('Delete ' + count + ' scan run' + (count === 1 ? '' : 's') + ' and all their results? This cannot be undone.')) {
+            document.getElementById('bulk-delete-form').submit();
+        }
+    }
+
+    // Single-card delete via fetch (avoids nested <form> issue)
+    function deleteOne(runId) {
+        if (!confirm('Delete this scan run and all its results?')) return;
+        var csrfToken = document.querySelector('#bulk-delete-form input[name="csrfmiddlewaretoken"]').value;
+        fetch('/resumes/scan-history/delete/' + runId + '/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'csrfmiddlewaretoken=' + encodeURIComponent(csrfToken)
+        }).then(function () {
+            // Remove the card from the DOM immediately without full page reload
+            var card = document.getElementById('card-' + runId);
+            if (card) {
+                var col = card.closest('.col-12');
+                if (col) col.style.transition = 'opacity 0.3s, transform 0.3s';
+                if (col) col.style.opacity = '0';
+                if (col) col.style.transform = 'translateX(20px)';
+                setTimeout(function () { window.location.reload(); }, 350);
+            }
+        }).catch(function () {
+            window.location.reload();
+        });
+    }
+</script>
+
+{% endblock %}

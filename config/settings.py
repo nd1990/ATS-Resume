@@ -137,7 +137,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Authentication Redirects
-LOGIN_REDIRECT_URL = 'home'
+LOGIN_REDIRECT_URL = 'bulk_upload'
 LOGOUT_REDIRECT_URL = 'home'
 
 # Security

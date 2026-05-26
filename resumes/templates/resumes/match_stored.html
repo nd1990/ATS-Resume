@@ -3,23 +3,171 @@
 {% block content %}
 <div class="row">
     <div class="col-lg-10 mx-auto">
-        <div class="d-flex align-items-center gap-2 mb-4">
+        <div class="mb-4">
             <h2 class="mb-0 text-accent">Match Stored Resumes with JD</h2>
-            <span class="badge bg-primary">Quality &amp; Specs</span>
         </div>
-        <p class="text-secondary-c mb-4">
-            Select resumes you already uploaded (bulk or single), paste a job description, and run AI match against specifications, certificates, and requirements. Best candidates appear sorted by score.
-        </p>
+        <p class="text-secondary-c mb-4">Select stored resumes, provide a JD, and run AI deep-scan.</p>
 
-        <form method="post" id="match-stored-form">
+        <form method="post" enctype="multipart/form-data" id="match-stored-form">
             {% csrf_token %}
             <div class="card bg-card-bg shadow-sm border-0 mb-4">
                 <div class="card-body p-4">
-                    <label class="form-label fw-bold text-white">{{ form.job_description.label }}</label>
-                    {{ form.job_description }}
-                    {% if form.job_description.errors %}
-                        <div class="text-danger small mt-1">{{ form.job_description.errors.0 }}</div>
+                    <label class="form-label fw-bold text-white mb-3">JOB DESCRIPTION</label>
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2 small mb-3">{{ form.non_field_errors.0 }}</div>
                     {% endif %}
+                    {# ── Saved JD Quick-select ── #}
+                    <div class="mb-3 p-3 rounded" style="background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.15);">
+                        <label class="form-label text-secondary-c small fw-bold">&#128230; Select Saved JD</label>
+                        <div class="d-flex gap-2">
+                            <select name="saved_jd" id="id_saved_jd" class="form-select form-select-sm bg-dark text-white border-secondary"
+                                onchange="onSavedJDChange()">
+                                <option value="">-- Use a new JD below --</option>
+                                {% for jd in saved_jds %}
+                                <option value="{{ jd.pk }}">{{ jd.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="text-secondary-c text-center small mb-3">&#8212; OR enter a new JD &#8212;</div>
+
+                    <div class="mb-3 position-relative">
+                        <label for="id_jd_title" class="form-label d-flex align-items-center gap-2">
+                            JOB TITLE / ROLE NAME
+                            <span class="auto-badge" id="jd-title-auto-badge" style="display:none;">&#10022;
+                                auto-filled</span>
+                        </label>
+                        <input type="text" name="jd_title" id="id_jd_title" class="form-control"
+                            placeholder="Auto-filled from JD content — or type manually" oninput="onTitleManualEdit()">
+                    </div>
+
+                    <!-- ── Tab Switcher ── -->
+                    <div class="jd-tab-switcher d-flex gap-0 mb-3 rounded-3 overflow-hidden"
+                        style="border:1px solid rgba(255,255,255,0.1);width:fit-content;">
+                        <button type="button" class="jd-tab-btn active" id="tab-file"
+                            onclick="switchJDTab('file')">Upload File</button>
+                        <button type="button" class="jd-tab-btn" id="tab-paste" onclick="switchJDTab('paste')">Paste
+                            Text</button>
+                        <button type="button" class="jd-tab-btn" id="tab-jd-link"
+                            onclick="switchJDTab('jd-link')">&#128279; JD Link</button>
+                        <button type="button" class="jd-tab-btn" id="tab-job-id"
+                            onclick="switchJDTab('job-id')">&#128203; From Job ID</button>
+                    </div>
+
+                    <!-- ── Panel: Upload File ── -->
+                    <div id="panel-file">
+                        <div class="jd-upload-zone" id="jd-drop-zone">
+                            <p class="jd-upload-text mb-2">Drag and drop your JD file here, or</p>
+                            <label for="id_jd_file"
+                                style="cursor:pointer;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;background:transparent;padding:0.4rem 1rem;border-radius:6px;display:inline-block;margin-bottom:0.75rem;">Browse
+                                File</label>
+                            {{ form.jd_file }}
+                            <p class="jd-upload-hint">PDF, DOCX, JPG or PNG supported</p>
+                            <div id="jd-file-name" class="jd-file-chosen" style="display:none;"></div>
+                        </div>
+                        {% if form.jd_file.errors %}
+                        <div class="text-danger small mt-2">{{ form.jd_file.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- ── Panel: Paste Text ── -->
+                    <div id="panel-paste" style="display:none;">
+                        {{ form.job_description }}
+                        {% if form.job_description.errors %}
+                        <div class="text-danger small mt-1">{{ form.job_description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- ── Panel: JD Link ── -->
+                    <div id="panel-jd-link" style="display:none;">
+                        <div class="jd-link-panel rounded-3 p-4"
+                            style="background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.15);">
+                            <div class="d-flex gap-2 align-items-start mb-3">
+                                <div class="flex-grow-1">
+                                    <label class="form-label text-secondary-c small fw-semibold mb-1">JD URL</label>
+                                    <input type="url" id="jd-link-input"
+                                        class="form-control bg-dark text-white border-secondary"
+                                        placeholder="https://www.linkedin.com/jobs/view/...">
+                                </div>
+                                <div class="pt-4 mt-1">
+                                    <button type="button" id="fetch-url-btn" class="btn btn-primary"
+                                        onclick="fetchJDFromURL()">
+                                        <span id="fetch-url-btn-text">&#128269; Fetch JD</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-secondary-c small mb-0">
+                                Paste a direct link to the job posting (LinkedIn, Indeed, Glassdoor, company
+                                career pages, etc.). We'll extract the job description text automatically.
+                            </p>
+
+                            <!-- Status / Result -->
+                            <div id="jd-url-fetch-status" class="mt-3" style="display:none;"></div>
+
+                            <!-- Fetched JD preview -->
+                            <div id="jd-url-fetched-preview" class="mt-3" style="display:none;">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="fw-bold text-white" id="url-fetched-title-label"></span>
+                                    <span class="auto-badge">&#10003; Loaded</span>
+                                </div>
+                                <textarea id="url-fetched-jd-preview"
+                                    class="form-control bg-dark text-white border-secondary small" rows="6"
+                                    readonly style="font-size:0.78rem;resize:vertical;opacity:0.8;"></textarea>
+                                <div class="mt-2 d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-info"
+                                        onclick="editURLFetchedJD()">&#9998; Edit before scan</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        onclick="clearURLFetchedJD()">&#10005; Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Panel: From Job ID ── -->
+                    <div id="panel-job-id" style="display:none;">
+                        <div class="job-id-panel rounded-3 p-4"
+                            style="background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.15);">
+
+                            <!-- Manual Job ID Input -->
+                            <div class="d-flex gap-2 align-items-start mb-3">
+                                <div class="flex-grow-1">
+                                    <label class="form-label text-secondary-c small fw-semibold mb-1">JOB ID</label>
+                                    <input type="number" id="job-id-input"
+                                        class="form-control bg-dark text-white border-secondary" placeholder="e.g. 12"
+                                        min="1" style="max-width:180px;">
+                                </div>
+                                <div class="pt-4 mt-1">
+                                    <button type="button" id="fetch-jd-btn" class="btn btn-primary"
+                                        onclick="fetchJDById()">
+                                        <span id="fetch-btn-text">&#128269; Fetch JD</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Status / Result preview -->
+                            <div id="jd-fetch-status" style="display:none;"></div>
+
+                            <!-- Fetched JD preview (read-only) -->
+                            <div id="jd-fetched-preview" style="display:none;">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="fw-bold text-white" id="fetched-job-title-label"></span>
+                                    <span class="auto-badge">&#10003; Loaded</span>
+                                    <span class="text-secondary-c small" id="fetched-job-meta"></span>
+                                </div>
+                                <textarea id="fetched-jd-text-preview"
+                                    class="form-control bg-dark text-white border-secondary small" rows="6" readonly
+                                    style="font-size:0.78rem;resize:vertical;opacity:0.8;"></textarea>
+                                <div class="mt-2 d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-info"
+                                        onclick="editFetchedJD()">&#9998; Edit before scan</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        onclick="clearFetchedJD()">&#10005; Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </form>
@@ -27,72 +175,751 @@
         <div class="card bg-card-bg shadow-sm border-0 mb-4">
             <div class="card-body p-4">
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-                    <label class="form-label fw-bold text-white mb-0">Stored resumes – select to match or delete</label>
+                    <label class="form-label fw-bold text-white mb-0">STORED RESUMES - SELECT TO MATCH</label>
                     <div class="d-flex align-items-center gap-2">
                         <button type="button" class="btn btn-sm btn-outline-light" id="select-all">Select all</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="deselect-all">Deselect all</button>
-                        <button type="submit" name="action" value="delete" form="match-stored-form" formnovalidate class="btn btn-sm btn-outline-danger" id="delete-selected" onclick="return confirm('Delete selected resumes?');" title="Delete selected">
-                            Delete selected
-                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="deselect-all">Deselect
+                            all</button>
+                        <button type="submit" name="action" value="delete" form="match-stored-form" formnovalidate
+                            class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Delete selected resumes?');">Delete selected</button>
                     </div>
                 </div>
                 {% if form.resumes.errors %}
-                    <div class="text-danger small mb-2">{{ form.resumes.errors.0 }}</div>
+                <div class="text-danger small mb-2">{{ form.resumes.errors.0 }}</div>
                 {% endif %}
                 {% if stored_resumes %}
-                    <div class="row g-3">
-                        {% for r in stored_resumes %}
-                        <div class="col-md-6 col-lg-4">
-                            <div class="stored-resume-card d-flex align-items-start gap-2 rounded-3 p-3 border border-secondary border-opacity-25">
-                                <label class="d-block mb-0 flex-grow-1 cursor-pointer min-w-0 overflow-hidden" style="cursor: pointer;">
-                                    <div class="form-check mb-0 d-flex align-items-start gap-2">
-                                        <input class="form-check-input mt-1 resume-cb flex-shrink-0" type="checkbox" name="resumes" value="{{ r.pk }}" id="resume-{{ r.pk }}" form="match-stored-form">
-                                        <div class="flex-grow-1 min-w-0 overflow-hidden">
-                                            <span class="fw-bold text-white d-block text-truncate">{{ r.candidate_name|default:r.file.name }}</span>
-                                            <small class="text-secondary-c d-block text-truncate">{{ r.file.name }}</small>
-                                            <small class="text-secondary-c">Uploaded {{ r.uploaded_at|date:"M d, Y" }}</small>
-                                        </div>
+                <div class="row g-3">
+                    {% for r in stored_resumes %}
+                    <div class="col-md-6 col-lg-4">
+                        <div
+                            class="stored-resume-card d-flex align-items-start gap-2 rounded-3 p-3 border border-secondary border-opacity-25">
+                            <label class="d-block mb-0 flex-grow-1 min-w-0 overflow-hidden" style="cursor:pointer;">
+                                <div class="form-check mb-0 d-flex align-items-start gap-2">
+                                    <input class="form-check-input mt-1 resume-cb flex-shrink-0" type="checkbox"
+                                        name="resumes" value="{{ r.pk }}" id="resume-{{ r.pk }}"
+                                        form="match-stored-form">
+                                    <div class="flex-grow-1 min-w-0 overflow-hidden">
+                                        <span class="fw-bold text-white d-block text-truncate">{{ r.candidate_name|default:r.file.name }}</span>
+                                        <small class="text-secondary-c d-block text-truncate">{{ r.file.name }}</small>
+                                        <small class="text-secondary-c">Uploaded {{ r.uploaded_at|date:"M d, Y" }}</small>
                                     </div>
-                                </label>
-                                <form method="post" action="{% url 'delete_resume' r.pk %}" class="flex-shrink-0 pt-1" onsubmit="return confirm('Delete this resume?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 1.75rem; height: 1.75rem;" title="Delete" aria-label="Delete resume">&#10005;</button>
-                                </form>
-                            </div>
+                                </div>
+                            </label>
+                            <form method="post" action="{% url 'delete_resume' r.pk %}" class="flex-shrink-0 pt-1"
+                                onsubmit="return confirm('Delete?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                    style="width:1.75rem;height:1.75rem;padding:0;" title="Delete">&#10005;</button>
+                            </form>
                         </div>
-                        {% endfor %}
                     </div>
+                    {% endfor %}
+                </div>
                 {% else %}
-                    <div class="text-center py-5 text-secondary-c rounded-3" style="background: rgba(15,23,42,0.5);">
-                        <p class="mb-2">No stored resumes yet.</p>
-                        <a href="{% url 'bulk_upload' %}" class="btn btn-primary btn-sm">Bulk Upload</a>
-                        <span class="mx-2 text-secondary-c">or</span>
-                        <a href="{% url 'ai_filter' %}" class="btn btn-outline-light btn-sm">Upload &amp; scan in AI Filter</a>
-                    </div>
+                <div class="text-center py-5 text-secondary-c">
+                    <p class="mb-2">No stored resumes yet.</p>
+                    <a href="{% url 'bulk_upload' %}" class="btn btn-primary btn-sm">Bulk Upload</a>
+                </div>
                 {% endif %}
             </div>
         </div>
 
         {% if stored_resumes %}
-        <div class="d-flex flex-wrap gap-2">
-            <button type="submit" name="action" value="match" form="match-stored-form" class="btn btn-primary btn-lg px-5">Run match &amp; quality check</button>
+        <div class="d-flex gap-2">
+            <button type="submit" name="action" value="match" form="match-stored-form" id="run-scan-btn"
+                class="btn btn-primary btn-lg px-5" onclick="showScanLoader(this);">
+                <span id="scan-btn-text">&#128269; Run Deep Scan</span>
+            </button>
             <a href="{% url 'bulk_upload' %}" class="btn btn-outline-light btn-lg">Bulk Upload more</a>
         </div>
         {% endif %}
     </div>
 </div>
 
+
+<!-- ── Scan Loader Overlay ── -->
+<div id="scan-loader-overlay">
+    <div class="scan-loader-box">
+        <div class="scan-spinner"></div>
+        <div class="scan-loader-title">Running Deep Scan&hellip;</div>
+        <div class="scan-loader-sub" id="scan-loader-sub">This may take 30&ndash;90 seconds per resume</div>
+        <div class="scan-loader-steps">
+            <div class="scan-step" id="step-1"><span class="scan-step-icon">&#128196;</span><span>Parsing resume
+                    documents</span></div>
+            <div class="scan-step" id="step-2"><span class="scan-step-icon">&#128203;</span><span>Extracting job
+                    description</span></div>
+            <div class="scan-step" id="step-3"><span class="scan-step-icon">&#129504;</span><span>Running AI skill
+                    matching</span></div>
+            <div class="scan-step" id="step-4"><span class="scan-step-icon">&#9989;</span><span>Compliance &amp; risk
+                    checks</span></div>
+            <div class="scan-step" id="step-5"><span class="scan-step-icon">&#128200;</span><span>Calculating final QA
+                    scores</span></div>
+            <div class="scan-step" id="step-6"><span class="scan-step-icon">&#128196;</span><span>Building scan
+                    report</span></div>
+        </div>
+    </div>
+</div>
+
 <style>
-.stored-resume-card:hover { background: rgba(56, 189, 248, 0.06); border-color: rgba(56, 189, 248, 0.3) !important; }
-.stored-resume-card .btn-link.text-danger:hover { text-decoration: underline; }
+    /* ── Tab buttons ── */
+    .jd-tab-btn {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.45);
+        padding: 0.45rem 1.1rem;
+        font-size: 0.82rem;
+        font-weight: 500;
+        transition: all .2s;
+        cursor: pointer;
+    }
+
+    .jd-tab-btn.active {
+        background: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+    }
+
+    .jd-tab-btn:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.75);
+    }
+
+    .jd-tab-btn#tab-job-id,
+    .jd-tab-btn#tab-jd-link {
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* ── Upload zone ── */
+    .jd-upload-zone {
+        border: 2px dashed rgba(56, 189, 248, 0.25);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        transition: border-color .25s, background .25s;
+        background: rgba(56, 189, 248, 0.03);
+    }
+
+    .jd-upload-zone.dragover {
+        border-color: #38bdf8;
+        background: rgba(56, 189, 248, 0.08);
+    }
+
+    .jd-upload-text {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: .9rem;
+    }
+
+    .jd-upload-hint {
+        color: rgba(255, 255, 255, 0.3);
+        font-size: .75rem;
+        margin-top: .5rem;
+        margin-bottom: 0;
+    }
+
+    .jd-file-chosen {
+        margin-top: .75rem;
+        padding: .4rem .8rem;
+        background: rgba(56, 189, 248, 0.1);
+        border-radius: 8px;
+        color: #38bdf8;
+        font-size: .82rem;
+        display: inline-block;
+    }
+
+    #id_jd_file {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* ── Stored resume card ── */
+    .stored-resume-card:hover {
+        background: rgba(56, 189, 248, 0.05);
+        border-color: rgba(56, 189, 248, 0.3) !important;
+    }
+
+    /* ── Fetch status messages ── */
+    .fetch-status-ok {
+        background: rgba(74, 222, 128, 0.1);
+        border: 1px solid rgba(74, 222, 128, 0.3);
+        color: #4ade80;
+        border-radius: 8px;
+        padding: .5rem .8rem;
+        font-size: .82rem;
+    }
+
+    .fetch-status-err {
+        background: rgba(248, 113, 113, 0.1);
+        border: 1px solid rgba(248, 113, 113, 0.3);
+        color: #f87171;
+        border-radius: 8px;
+        padding: .5rem .8rem;
+        font-size: .82rem;
+    }
+
+    .fetch-status-loading {
+        background: rgba(56, 189, 248, 0.08);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        color: #38bdf8;
+        border-radius: 8px;
+        padding: .5rem .8rem;
+        font-size: .82rem;
+    }
+
+    /* ── Scan Loader ── */
+    #scan-loader-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(6, 12, 26, 0.88);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #scan-loader-overlay.active {
+        display: flex;
+    }
+
+    .scan-loader-box {
+        background: linear-gradient(135deg, rgba(14, 165, 233, 0.10) 0%, rgba(99, 102, 241, 0.10) 100%);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 20px;
+        padding: 2.75rem 3rem;
+        text-align: center;
+        max-width: 420px;
+        width: 90%;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(56, 189, 248, 0.05);
+        animation: loaderPop .35s cubic-bezier(.22, 1, .36, 1);
+    }
+
+    @keyframes loaderPop {
+        from {
+            opacity: 0;
+            transform: scale(.9) translateY(16px);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    .scan-spinner {
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        border: 4px solid rgba(56, 189, 248, 0.12);
+        border-top-color: #38bdf8;
+        border-right-color: #818cf8;
+        animation: spin .85s linear infinite;
+        margin: 0 auto 1.6rem;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .scan-loader-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: .35rem;
+    }
+
+    .scan-loader-sub {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-bottom: 1.6rem;
+    }
+
+    .scan-loader-steps {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+        text-align: left;
+    }
+
+    .scan-step {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        font-size: 0.81rem;
+        color: rgba(255, 255, 255, 0.22);
+        transition: color .4s ease, transform .4s ease;
+        padding: 2px 0;
+    }
+
+    .scan-step.active {
+        color: #38bdf8;
+        transform: translateX(5px);
+    }
+
+    .scan-step.done {
+        color: #4ade80;
+    }
+
+    .scan-step-icon {
+        font-size: .9rem;
+        flex-shrink: 0;
+        width: 20px;
+        text-align: center;
+    }
+
+    /* ── Auto-badge ── */
+    .auto-badge {
+        background: rgba(56, 189, 248, 0.12);
+        color: #38bdf8;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        border-radius: 20px;
+        font-size: 0.68rem;
+        font-weight: 600;
+        padding: 0.15rem 0.55rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        animation: fadeInBadge 0.3s ease;
+    }
+
+    @keyframes fadeInBadge {
+        from {
+            opacity: 0;
+            transform: scale(0.85);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
 </style>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var selectAll = document.getElementById('select-all');
-    var deselectAll = document.getElementById('deselect-all');
-    var checkboxes = document.querySelectorAll('.resume-cb');
-    if (selectAll) selectAll.addEventListener('click', function() { checkboxes.forEach(function(cb) { cb.checked = true; }); });
-    if (deselectAll) deselectAll.addEventListener('click', function() { checkboxes.forEach(function(cb) { cb.checked = false; }); });
-});
+    var CSRF_TOKEN = '{{ csrf_token }}';
+    var EXTRACT_URL = '{% url "extract_jd_title_ajax" %}';
+    var FETCH_JD_URL = '{% url "fetch_jd_by_id_ajax" %}';
+    var FETCH_JD_FROM_URL = '{% url "fetch_jd_from_url_ajax" %}';
+    var _titleAutoFilled = false;
+    var _pasteTimer;
+    var _fetchedJDText = '';        // stores last fetched JD from Job ID
+    var _urlFetchedJDText = '';     // stores last fetched JD from URL
+    var _activeTab = 'file';        // track which tab is active for form submission
+
+    // ── Tab Switcher ──────────────────────────────────────────────────────────
+    function switchJDTab(tab) {
+        var panels = { file: 'panel-file', paste: 'panel-paste', 'jd-link': 'panel-jd-link', 'job-id': 'panel-job-id' };
+        var tabs = { file: 'tab-file', paste: 'tab-paste', 'jd-link': 'tab-jd-link', 'job-id': 'tab-job-id' };
+
+        _activeTab = tab;
+
+        Object.keys(panels).forEach(function (k) {
+            document.getElementById(panels[k]).style.display = (k === tab) ? '' : 'none';
+            var btn = document.getElementById(tabs[k]);
+            if (btn) btn.classList.toggle('active', k === tab);
+        });
+
+        // Clear irrelevant fields when switching
+        var fi = document.getElementById('id_jd_file');
+        var ta = document.getElementById('id_job_description');
+
+        if (tab === 'file') {
+            if (ta) ta.value = '';
+            _fetchedJDText = '';
+            _urlFetchedJDText = '';
+        } else if (tab === 'paste') {
+            if (fi) fi.value = '';
+            _fetchedJDText = '';
+            _urlFetchedJDText = '';
+        } else if (tab === 'jd-link') {
+            if (fi) fi.value = '';
+            if (ta) ta.value = '';
+            _fetchedJDText = '';
+        } else if (tab === 'job-id') {
+            if (fi) fi.value = '';
+            if (ta) ta.value = '';
+            _urlFetchedJDText = '';
+        }
+    }
+
+    // ── From Job ID: fetch via AJAX ───────────────────────────────────────────
+    function fetchJDById() {
+        var jobId = (document.getElementById('job-id-input').value || '').trim();
+        if (!jobId) {
+            setFetchStatus('error', 'Please enter a Job ID.');
+            return;
+        }
+
+        setFetchStatus('loading', '&#9203; Fetching JD for Job #' + jobId + '&hellip;');
+        document.getElementById('fetch-btn-text').innerHTML = '&#9203; Fetching&hellip;';
+        document.getElementById('fetch-jd-btn').disabled = true;
+        document.getElementById('jd-fetched-preview').style.display = 'none';
+
+        fetch(FETCH_JD_URL + '?job_id=' + encodeURIComponent(jobId), {
+            method: 'GET',
+            headers: { 'X-CSRFToken': CSRF_TOKEN }
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                document.getElementById('fetch-btn-text').innerHTML = '&#128269; Fetch JD';
+                document.getElementById('fetch-jd-btn').disabled = false;
+
+                if (!data.ok) {
+                    setFetchStatus('error', '&#10005; ' + (data.error || 'Job not found.'));
+                    return;
+                }
+
+                _fetchedJDText = data.description || '';
+
+                if (data.title) {
+                    _titleAutoFilled = false;
+                    autoFillTitle(data.title);
+                }
+
+                var preview = document.getElementById('jd-fetched-preview');
+                document.getElementById('fetched-job-title-label').textContent = '#' + data.id + ' — ' + (data.title || 'Untitled');
+                var meta = [];
+                if (data.location) meta.push('&#128205; ' + data.location);
+                if (data.domain) meta.push('&#127970; ' + data.domain);
+                if (data.experience_years) meta.push('&#128197; ' + data.experience_years + ' yrs exp');
+                if (data.is_template) meta.push('[Template]');
+                document.getElementById('fetched-job-meta').innerHTML = meta.join(' &nbsp;&middot;&nbsp; ');
+                document.getElementById('fetched-jd-text-preview').value = _fetchedJDText;
+                preview.style.display = '';
+                preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                setFetchStatus('ok', '&#10003; Loaded: <strong>' + escHtml(data.title || 'Job #' + data.id) + '</strong>' +
+                    (data.required_skills && data.required_skills.length
+                        ? ' &mdash; ' + data.required_skills.length + ' required skills'
+                        : ''));
+            })
+            .catch(function (err) {
+                document.getElementById('fetch-btn-text').innerHTML = '&#128269; Fetch JD';
+                document.getElementById('fetch-jd-btn').disabled = false;
+                setFetchStatus('error', '&#10005; Network error. Is the server running?');
+            });
+    }
+
+    function setFetchStatus(type, html) {
+        var el = document.getElementById('jd-fetch-status');
+        el.className = 'mb-3 fetch-status-' + (type === 'ok' ? 'ok' : type === 'error' ? 'err' : 'loading');
+        el.innerHTML = html;
+        el.style.display = '';
+    }
+
+    function editFetchedJD() {
+        var ta = document.getElementById('id_job_description');
+        if (ta) ta.value = _fetchedJDText;
+        switchJDTab('paste');
+    }
+
+    function clearFetchedJD() {
+        _fetchedJDText = '';
+        document.getElementById('jd-fetched-preview').style.display = 'none';
+        document.getElementById('jd-fetch-status').style.display = 'none';
+        document.getElementById('job-id-input').value = '';
+        var badge = document.getElementById('jd-title-auto-badge');
+        if (badge) badge.style.display = 'none';
+    }
+
+    // ── JD Link: fetch from external URL ──────────────────────────────────────
+    function fetchJDFromURL() {
+        var url = (document.getElementById('jd-link-input').value || '').trim();
+        if (!url) {
+            setURLFetchStatus('error', 'Please enter a URL.');
+            return;
+        }
+
+        setURLFetchStatus('loading', '&#9203; Fetching JD from URL&hellip;');
+        document.getElementById('fetch-url-btn-text').innerHTML = '&#9203; Fetching&hellip;';
+        document.getElementById('fetch-url-btn').disabled = true;
+        document.getElementById('jd-url-fetched-preview').style.display = 'none';
+
+        var fd = new FormData();
+        fd.append('jd_url', url);
+        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+        fetch(FETCH_JD_FROM_URL, { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                document.getElementById('fetch-url-btn-text').innerHTML = '&#128269; Fetch JD';
+                document.getElementById('fetch-url-btn').disabled = false;
+
+                if (!data.ok) {
+                    setURLFetchStatus('error', '&#10005; ' + (data.error || 'Could not extract JD.'));
+                    return;
+                }
+
+                _urlFetchedJDText = data.description || '';
+
+                if (data.title) {
+                    _titleAutoFilled = false;
+                    autoFillTitle(data.title);
+                }
+
+                var preview = document.getElementById('jd-url-fetched-preview');
+                document.getElementById('url-fetched-title-label').textContent = data.title || 'Job Description';
+                document.getElementById('url-fetched-jd-preview').value = _urlFetchedJDText;
+                preview.style.display = '';
+                preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                setURLFetchStatus('ok', '&#10003; Extracted JD from <strong>' + escHtml(data.title || url) + '</strong>');
+            })
+            .catch(function () {
+                document.getElementById('fetch-url-btn-text').innerHTML = '&#128269; Fetch JD';
+                document.getElementById('fetch-url-btn').disabled = false;
+                setURLFetchStatus('error', '&#10005; Network error. Is the server running?');
+            });
+    }
+
+    function setURLFetchStatus(type, html) {
+        var el = document.getElementById('jd-url-fetch-status');
+        el.className = 'fetch-status-' + (type === 'ok' ? 'ok' : type === 'error' ? 'err' : 'loading');
+        el.innerHTML = html;
+        el.style.display = '';
+    }
+
+    function editURLFetchedJD() {
+        var ta = document.getElementById('id_job_description');
+        if (ta) ta.value = _urlFetchedJDText;
+        switchJDTab('paste');
+    }
+
+    function clearURLFetchedJD() {
+        _urlFetchedJDText = '';
+        document.getElementById('jd-url-fetched-preview').style.display = 'none';
+        document.getElementById('jd-url-fetch-status').style.display = 'none';
+        document.getElementById('jd-link-input').value = '';
+        var badge = document.getElementById('jd-title-auto-badge');
+        if (badge) badge.style.display = 'none';
+    }
+
+    function escHtml(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ── Title auto-fill helpers ─────────────────────────────────────────
+    function autoFillTitle(value) {
+        var inp = document.getElementById('id_jd_title');
+        var badge = document.getElementById('jd-title-auto-badge');
+        if (!inp) return;
+        if (!inp.value || _titleAutoFilled) {
+            inp.value = value;
+            _titleAutoFilled = !!value;
+            if (badge) badge.style.display = value ? 'inline-flex' : 'none';
+        }
+    }
+    function setTitleLoading(loading) {
+        var inp = document.getElementById('id_jd_title');
+        var badge = document.getElementById('jd-title-auto-badge');
+        if (!inp) return;
+        if (loading) {
+            inp.placeholder = '⏳ Reading JD content…'; inp.disabled = true;
+            if (badge) { badge.textContent = '⏳ reading…'; badge.style.display = 'inline-flex'; }
+        } else {
+            inp.placeholder = 'Auto-filled from JD content — or type manually'; inp.disabled = false;
+        }
+    }
+    function fetchTitleFromFile(file) {
+        setTitleLoading(true);
+        var fd = new FormData();
+        fd.append('jd_file', file);
+        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+        fetch(EXTRACT_URL, { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                setTitleLoading(false);
+                if (data.title) { _titleAutoFilled = false; autoFillTitle(data.title); }
+                else {
+                    var inp = document.getElementById('id_jd_title');
+                    if (inp) inp.placeholder = 'Could not extract title — type manually';
+                    var badge = document.getElementById('jd-title-auto-badge');
+                    if (badge) badge.style.display = 'none';
+                }
+            })
+            .catch(function () { setTitleLoading(false); });
+    }
+    function extractTitleFromText(text) {
+        var lines = text.split('\n');
+        var labelRe = /^(?:job\s*title|position|role|title)\s*[:\-–]\s*(.+)/i;
+        var skipRe = /^(job\s*description|company|location|salary|date|about|overview|responsibilities|requirements|qualifications|benefits)/i;
+        for (var i = 0; i < Math.min(lines.length, 20); i++) {
+            var line = lines[i].replace(/^#+\s*/, '').replace(/^\*+\s*/, '').trim();
+            var m = labelRe.exec(line);
+            if (m && m[1].length > 3 && m[1].length < 120) return m[1].trim();
+        }
+        for (var i = 0; i < Math.min(lines.length, 20); i++) {
+            var line = lines[i].replace(/^#+\s*/, '').replace(/^\*+\s*/, '').trim();
+            if (!line || skipRe.test(line)) continue;
+            if (line.length > 3 && line.length < 120) return line;
+        }
+        return '';
+    }
+    function onTitleManualEdit() {
+        _titleAutoFilled = false;
+        var badge = document.getElementById('jd-title-auto-badge');
+        if (badge) badge.style.display = 'none';
+    }
+
+    // ── Saved JD selection ────────────────────────────────────────────
+    function onSavedJDChange() {
+        var sel = document.getElementById('id_saved_jd');
+        var pk = sel ? sel.value : '';
+        var ta = document.getElementById('id_job_description');
+        var titleInp = document.getElementById('id_jd_title');
+
+        if (!pk) {
+            // Reset to blank
+            if (ta) ta.value = '';
+            if (titleInp) { titleInp.value = ''; titleInp.placeholder = 'Auto-filled from JD content — or type manually'; }
+            var badge = document.getElementById('jd-title-auto-badge');
+            if (badge) badge.style.display = 'none';
+            return;
+        }
+
+        // Fetch the saved JD via AJAX
+        fetch(FETCH_JD_URL + '?job_id=' + encodeURIComponent(pk), {
+            method: 'GET',
+            headers: { 'X-CSRFToken': CSRF_TOKEN }
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.ok || !data.description) return;
+                if (ta) ta.value = data.description;
+                _fetchedJDText = data.description;
+                if (titleInp && data.title) {
+                    titleInp.value = data.title;
+                    _titleAutoFilled = true;
+                    var badge = document.getElementById('jd-title-auto-badge');
+                    if (badge) { badge.textContent = '&#10022; auto-filled'; badge.style.display = 'inline-flex'; }
+                }
+                // Switch to paste tab so user can see/edit
+                switchJDTab('paste');
+            })
+            .catch(function () {});
+    }
+
+    // ── Scan Loader ───────────────────────────────────────────────────────────
+    function showScanLoader(btn) {
+        var checked = document.querySelectorAll('.resume-cb:checked').length;
+        if (checked === 0) return;
+        document.getElementById('scan-loader-overlay').classList.add('active');
+        setTimeout(function () {
+            btn.disabled = true;
+            var t = document.getElementById('scan-btn-text');
+            if (t) t.innerHTML = '&#9203; Scanning&hellip;';
+        }, 100);
+        var steps = ['step-1', 'step-2', 'step-3', 'step-4', 'step-5', 'step-6'];
+        var delays = [0, 3000, 8000, 15000, 22000, 30000];
+        var subs = ['Parsing documents&hellip;', 'Extracting skills from JD&hellip;', 'Running AI analysis&hellip;', 'Checking compliance rules&hellip;', 'Scoring candidates&hellip;', 'Almost done, building reports&hellip;'];
+        steps.forEach(function (id, i) {
+            setTimeout(function () {
+                if (i > 0) { var p = document.getElementById(steps[i - 1]); if (p) { p.classList.remove('active'); p.classList.add('done'); } }
+                var el = document.getElementById(id); if (el) el.classList.add('active');
+            }, delays[i]);
+        });
+        subs.forEach(function (txt, i) {
+            setTimeout(function () { var s = document.getElementById('scan-loader-sub'); if (s) s.innerHTML = txt; }, delays[i]);
+        });
+    }
+
+    // ── DOMContentLoaded ─────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        // Select / Deselect all resumes
+        var sa = document.getElementById('select-all');
+        var da = document.getElementById('deselect-all');
+        if (sa) sa.addEventListener('click', function () { document.querySelectorAll('.resume-cb').forEach(function (c) { c.checked = true; }); });
+        if (da) da.addEventListener('click', function () { document.querySelectorAll('.resume-cb').forEach(function (c) { c.checked = false; }); });
+
+        var fi = document.getElementById('id_jd_file');
+        var fn = document.getElementById('jd-file-name');
+        var ta = document.getElementById('id_job_description');
+
+        // File input change
+        if (fi && fn) {
+            fi.addEventListener('change', function () {
+                if (this.files && this.files[0]) {
+                    var f = this.files[0];
+                    fn.textContent = String.fromCharCode(10003) + ' ' + f.name;
+                    fn.style.display = 'inline-block';
+                    fetchTitleFromFile(f);
+                } else { fn.style.display = 'none'; }
+            });
+        }
+
+        // Paste textarea auto-extract title
+        if (ta) {
+            ta.addEventListener('input', function () {
+                clearTimeout(_pasteTimer);
+                var text = this.value;
+                _pasteTimer = setTimeout(function () {
+                    var extracted = extractTitleFromText(text);
+                    if (extracted) autoFillTitle(extracted);
+                }, 500);
+            });
+        }
+
+        // Drag & drop on upload zone
+        var dz = document.getElementById('jd-drop-zone');
+        if (dz && fi) {
+            dz.addEventListener('click', function (e) { if (e.target.tagName !== 'LABEL') fi.click(); });
+            dz.addEventListener('dragover', function (e) { e.preventDefault(); dz.classList.add('dragover'); });
+            dz.addEventListener('dragleave', function () { dz.classList.remove('dragover'); });
+            dz.addEventListener('drop', function (e) {
+                e.preventDefault(); dz.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    var dt = new DataTransfer(); dt.items.add(e.dataTransfer.files[0]);
+                    fi.files = dt.files;
+                    var f = e.dataTransfer.files[0];
+                    fn.textContent = String.fromCharCode(10003) + ' ' + f.name;
+                    fn.style.display = 'inline-block';
+                    fetchTitleFromFile(f);
+                    switchJDTab('file');
+                }
+            });
+        }
+
+        // Job ID input: allow pressing Enter to fetch
+        var ji = document.getElementById('job-id-input');
+        if (ji) {
+            ji.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); fetchJDById(); }
+            });
+        }
+
+        // JD Link input: allow pressing Enter to fetch
+        var jli = document.getElementById('jd-link-input');
+        if (jli) {
+            jli.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); fetchJDFromURL(); }
+            });
+        }
+
+        // ── CRITICAL FIX: Before form submit, sync the correct JD text ──
+        // This fixes the duplicate name="job_description" bug.
+        // When using "From Job ID" or "JD Link" tabs, the fetched text
+        // is written into the Django-rendered textarea so it gets POSTed.
+        var form = document.getElementById('match-stored-form');
+        if (form) {
+            form.addEventListener('submit', function () {
+                var ta = document.getElementById('id_job_description');
+                if (!ta) return;
+
+                if (_activeTab === 'job-id' && _fetchedJDText) {
+                    ta.value = _fetchedJDText;
+                } else if (_activeTab === 'jd-link' && _urlFetchedJDText) {
+                    ta.value = _urlFetchedJDText;
+                }
+                // For 'file' and 'paste' tabs, the textarea already has the correct value
+                // (either empty for file-upload, or user-typed for paste)
+            });
+        }
+    });
 </script>
+
 {% endblock %}

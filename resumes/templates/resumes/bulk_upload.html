@@ -1,69 +1,518 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
-<!-- bulk_upload v2 -->
+<!-- bulk_upload v3 -->
 <div class="row">
-    <div class="col-lg-8 mx-auto">
+    <div class="col-lg-10 mx-auto">
         <div class="mb-4">
             <h2 class="mb-0 text-accent">Bulk Resume Screening</h2>
         </div>
         <p class="text-secondary-c mb-4">
-            Select a <strong class="text-white">local folder</strong> containing resumes. All PDF, DOCX, JPG, and PNG files will be uploaded, stored, and screened against the job you choose.
+            Upload <strong class="text-white">individual files</strong>, a <strong class="text-white">local folder</strong> of resumes, or paste
+            <strong class="text-white">public file URLs</strong>. All PDF, DOCX, JPG, and PNG files will be stored
+            and screened against the job you choose.
         </p>
 
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="row g-4">
-                
-                <div class="col-md-12">
-                    <div class="card bg-card-bg shadow-sm border-0 h-100">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center gap-2 mb-3">
-                             
-                                <h5 class="mb-0 text-white">Choose Folder</h5>
-                            </div>
-                            <p class="text-secondary-c small mb-3">Pick a folder with PDF, DOCX, JPG, or PNG resumes.</p>
-                            <div class="upload-zone rounded-3 p-4 text-center border border-secondary border-opacity-25" style="background: rgba(15,23,42,0.5); transition: all 0.2s;">
-                                <input type="file" name="resumes" id="resume-folder" class="d-none"
-                                    webkitdirectory directory multiple required>
-                                <label for="resume-folder" class="mb-0 cursor-pointer d-block">
-                                    <span class="btn btn-outline-light btn-lg px-4">Choose folder</span>
-                                    <span class="d-block text-secondary-c small mt-2" id="file-count">No folder chosen</span>
-                                </label>
-                            </div>
+        {% if error_message %}
+        <div class="alert alert-danger border-0 mb-3" style="background: rgba(239,68,68,0.12); color: #fca5a5;">
+            {{ error_message }}
+        </div>
+        {% endif %}
+
+        {# ── Tab bar ── #}
+        <div class="bulk-tab-bar d-flex gap-0 mb-4 rounded-3 overflow-hidden"
+            style="border: 1px solid rgba(255,255,255,0.1); width: fit-content;">
+            <button type="button" class="bulk-tab-btn active" id="btn-file" onclick="switchBulkTab('file')">
+                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" class="me-1">
+                    <path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1M4.5 9a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1zM4 10.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m.5 2.5a.5.5 0 0 1 0-1h4a.5.5 0 0 1 0 1z"/>
+                </svg>
+                Upload Files
+            </button>
+            <button type="button" class="bulk-tab-btn" id="btn-folder" onclick="switchBulkTab('folder')">
+                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" class="me-1">
+                    <path
+                        d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a2 2 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3m-8.322.12q.322-.119.684-.12h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981z" />
+                </svg>
+                Upload Folder
+            </button>
+            <button type="button" class="bulk-tab-btn" id="btn-url" onclick="switchBulkTab('url')">
+                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" class="me-1">
+                    <path
+                        d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z" />
+                    <path
+                        d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z" />
+                </svg>
+                Import from URL
+            </button>
+        </div>
+
+        {# ── PANEL: Upload Files ── #}
+        <div id="panel-file">
+            <form method="post" enctype="multipart/form-data" id="file-form">
+                {% csrf_token %}
+                <input type="hidden" name="upload_mode" value="folder">
+                <div class="card bg-card-bg shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="mb-1 text-white">Choose Files</h5>
+                        <p class="text-secondary-c small mb-3">Select one or more PDF, DOCX, JPG, or PNG resume files.</p>
+                        <div class="upload-zone rounded-3 p-3 text-center"
+                            style="border: 2px dashed rgba(56,189,248,0.2); background: rgba(15,23,42,0.5); transition: all 0.2s;"
+                            id="file-drop-zone">
+                            <input type="file" name="resumes" id="resume-files" class="d-none" multiple
+                                accept=".pdf,.docx,.jpg,.jpeg,.png">
+                            <label for="resume-files" class="mb-0 cursor-pointer d-block" style="cursor:pointer;">
+                                <div class="mb-3" style="color: rgba(56,189,248,0.5);">
+                                    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.3"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9" />
+                                    </svg>
+                                </div>
+                                <span class="btn btn-outline-light btn-lg px-5">Choose Files</span>
+                                <span class="d-block text-secondary-c small mt-3" id="file-file-count">No files chosen</span>
+                            </label>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="mt-4">
-                <button type="submit" class="btn btn-primary btn-lg px-5">Click Upload Resumes</button>
-            </div>
-        </form>
+                <div class="mt-2 mb-4">
+                    <button type="submit" id="file-submit-btn" class="btn btn-primary btn-lg px-5 rounded-pill fw-bold"
+                        style="background: linear-gradient(90deg,#0ea5e9,#6366f1); border:none; box-shadow: 0 4px 24px rgba(14,165,233,0.25);">
+                        <span id="file-btn-text">&#128196; Upload Resumes</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {# ── PANEL: Upload Folder ── #}
+        <div id="panel-folder" style="display:none;">
+            <form method="post" enctype="multipart/form-data" id="folder-form">
+                {% csrf_token %}
+                <input type="hidden" name="upload_mode" value="folder">
+                <div class="card bg-card-bg shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="mb-1 text-white">Choose Folder</h5>
+                        <p class="text-secondary-c small mb-3">Pick a folder with PDF, DOCX, JPG, or PNG resumes.</p>
+                        <div class="upload-zone rounded-3 p-5 text-center"
+                            style="border: 2px dashed rgba(56,189,248,0.2); background: rgba(15,23,42,0.5); transition: all 0.2s;">
+                            <input type="file" name="resumes" id="resume-folder" class="d-none" webkitdirectory
+                                directory multiple>
+                            <label for="resume-folder" class="mb-0 cursor-pointer d-block" style="cursor:pointer;">
+                                <div class="mb-3" style="color: rgba(56,189,248,0.5);">
+                                    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.3"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v8.25A2.25 2.25 0 0 0 4.5 16.5h15a2.25 2.25 0 0 0 2.25-2.25V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
+                                    </svg>
+                                </div>
+                                <span class="btn btn-outline-light btn-lg px-5">Choose Folder</span>
+                                <span class="d-block text-secondary-c small mt-3" id="file-count">No folder
+                                    chosen</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-2 mb-4">
+                    <button type="submit" id="folder-submit-btn" class="btn btn-primary btn-lg px-5 rounded-pill fw-bold"
+                        style="background: linear-gradient(90deg,#0ea5e9,#6366f1); border:none; box-shadow: 0 4px 24px rgba(14,165,233,0.25);">
+                        <span id="folder-btn-text">&#128193; Click Upload Resumes</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {# ── PANEL: Import from URL ── #}
+        <div id="panel-url" style="display:none;">
+            <form method="post" id="url-form">
+                {% csrf_token %}
+                <input type="hidden" name="upload_mode" value="url">
+                <div class="card bg-card-bg shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="mb-1 text-white">Import from URL</h5>
+                        <p class="text-secondary-c small mb-3">
+                            Paste one or more <strong class="text-white">direct file URLs</strong> (PDF, DOCX, JPG, PNG)
+                            — one per line. Files will be downloaded and stored automatically.
+                        </p>
+                        <textarea name="resume_urls" id="resume-urls" rows="7"
+                            class="form-control bg-card-bg text-white"
+                            style="resize: vertical; font-size: 0.88rem; font-family: monospace; border-color: rgba(56,189,248,0.2);"
+                            placeholder="https://example.com/resume1.pdf&#10;https://example.com/resume2.docx&#10;https://example.com/resume3.png"></textarea>
+                        <div class="form-text mt-2" style="color: rgba(255,255,255,0.35);">
+                            One URL per line &bull; Supported: PDF, DOCX, JPG, PNG &bull; Must be publicly accessible
+                            direct-download links
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-2 mb-4">
+                    <button type="submit" class="btn btn-primary btn-lg px-5 rounded-pill fw-bold"
+                        style="background: linear-gradient(90deg,#0ea5e9,#6366f1); border:none; box-shadow: 0 4px 24px rgba(14,165,233,0.25);"
+                        id="url-submit-btn">
+                        <span id="url-btn-text">Import &amp; Upload Resumes</span>
+                        <span id="url-btn-spinner" class="spinner-border spinner-border-sm ms-2"
+                            style="display:none;"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
 
         {% if uploaded_count %}
-        <div class="alert alert-success mt-4 border-0" style="background: rgba(34,197,94,0.12); color: #bbf7d0;">
-            <strong style="color:#4ade80;">{{ uploaded_count }}</strong> resume{% if uploaded_count != 1 %}s{% endif %} uploaded and stored successfully.
-            {% if selected_job %}
-            They were also screened against <strong style="color:#4ade80;">{{ selected_job.title }}</strong>.
-            {% else %}
-            Use <a href="{% url 'match_stored' %}" class="fw-bold" style="color:#4ade80;">Match Stored</a> to run quality check and match against any JD.
+        <div id="upload-success" class="mt-2 mb-4 success-panel">
+            <div class="success-panel-top d-flex align-items-center gap-3">
+                <div class="success-check-icon">&#10003;</div>
+                <div>
+                    <div class="success-title"><strong>{{ uploaded_count }}</strong> resume{% if uploaded_count != 1 %}s{% endif %} uploaded &amp; stored successfully!</div>
+                    {% if selected_job %}
+                    <div class="success-sub">Screened against <strong style="color:#4ade80;">{{ selected_job.title }}</strong>.</div>
+                    {% else %}
+                    <div class="success-sub">Resumes saved. Now run an AI deep-scan to match candidates against a Job Description.</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% if not selected_job %}
+            <div class="success-cta-row">
+                <a href="{% url 'match_stored' %}" class="btn-cta-match">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="me-2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    Run Match &amp; Deep Scan
+                    <span class="btn-cta-arrow">&#8594;</span>
+                </a>
+                <a href="{% url 'scan_history' %}" class="btn-cta-secondary">
+                    &#128197; View Scan History
+                </a>
+            </div>
             {% endif %}
         </div>
         {% endif %}
 
-        <div class="card bg-card-bg border-0 mt-4 p-4" style="border-left: 4px solid var(--accent) !important;">
-            <p class="text-secondary-c mb-0 small">
-                <strong class="text-white">Next step:</strong> After uploading, use <a href="{% url 'match_stored' %}" class="text-accent fw-bold">Match Stored</a> to run quality check and match against any JD (specs, certificates, awards).
-            </p>
+        {% if url_errors %}
+        <div class="alert border-0 mb-4"
+            style="background: rgba(239,68,68,0.10); color: #fca5a5; border-left: 4px solid #f87171 !important;">
+            <strong style="color:#f87171;">Some URLs failed:</strong>
+            <ul class="mb-0 mt-2 small">
+                {% for err in url_errors %}<li>{{ err }}</li>{% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="next-step-banner">
+            <div class="next-step-left">
+                <div class="next-step-icon">&#9654;</div>
+                <div>
+                    <div class="next-step-label">NEXT STEP</div>
+                    <div class="next-step-desc">Select stored resumes, provide a JD and run AI deep-scan &mdash; skills, certifications, compliance &amp; risk.</div>
+                </div>
+            </div>
+            <a href="{% url 'match_stored' %}" class="btn-next-step">
+                Match Stored Resumes
+                <span>&#8594;</span>
+            </a>
         </div>
     </div>
 </div>
 
+<style>
+    .bulk-tab-btn {
+        background: transparent;
+        border: none;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.45);
+        padding: 0.5rem 1.15rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .bulk-tab-btn:first-child {
+        border-left: none;
+    }
+
+    .bulk-tab-btn.active {
+        background: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+    }
+
+    .bulk-tab-btn:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.75);
+    }
+
+    .upload-zone:hover {
+        border-color: rgba(56, 189, 248, 0.45) !important;
+        background: rgba(56, 189, 248, 0.04) !important;
+    }
+
+    /* ── Success Panel ── */
+    .success-panel {
+        background: linear-gradient(135deg, rgba(34,197,94,0.10) 0%, rgba(16,185,129,0.06) 100%);
+        border: 1px solid rgba(74,222,128,0.25);
+        border-left: 4px solid #4ade80 !important;
+        border-radius: 14px;
+        padding: 1.5rem 1.75rem;
+        animation: slideInUp 0.4s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes slideInUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+    .success-check-icon {
+        width: 2.8rem; height: 2.8rem; border-radius: 50%;
+        background: rgba(74,222,128,0.15); border: 2px solid rgba(74,222,128,0.4);
+        display: flex; align-items: center; justify-content: center;
+        color: #4ade80; font-size: 1.25rem; font-weight: 800; flex-shrink: 0;
+    }
+    .success-title { color: #bbf7d0; font-size: 1rem; font-weight: 600; margin-bottom: 0.2rem; }
+    .success-sub   { color: rgba(187,247,208,0.65); font-size: 0.83rem; }
+    .success-cta-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 1.25rem;
+        flex-wrap: wrap;
+    }
+    .btn-cta-match {
+        display: inline-flex; align-items: center;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: #fff; font-weight: 700; font-size: 0.95rem;
+        padding: 0.65rem 1.6rem;
+        border-radius: 50px; text-decoration: none;
+        box-shadow: 0 4px 20px rgba(16,185,129,0.35);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: none;
+    }
+    .btn-cta-match:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(16,185,129,0.5); color: #fff; }
+    .btn-cta-arrow { margin-left: 0.5rem; transition: transform 0.2s; }
+    .btn-cta-match:hover .btn-cta-arrow { transform: translateX(4px); }
+    .btn-cta-secondary {
+        display: inline-flex; align-items: center;
+        color: rgba(187,247,208,0.7); font-size: 0.85rem; font-weight: 500;
+        text-decoration: none; padding: 0.5rem 1rem;
+        border: 1px solid rgba(74,222,128,0.2); border-radius: 50px;
+        transition: all 0.2s; background: rgba(74,222,128,0.05);
+    }
+    .btn-cta-secondary:hover { background: rgba(74,222,128,0.12); color: #bbf7d0; border-color: rgba(74,222,128,0.4); }
+
+    /* ── Next Step Banner ── */
+    .next-step-banner {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 1rem; flex-wrap: wrap;
+        background: linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(99,102,241,0.06) 100%);
+        border: 1px solid rgba(56,189,248,0.2);
+        border-left: 4px solid #38bdf8 !important;
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        margin-top: 0.5rem;
+    }
+    .next-step-left { display: flex; align-items: center; gap: 1rem; }
+    .next-step-icon {
+        width: 2.4rem; height: 2.4rem; border-radius: 50%;
+        background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.3);
+        display: flex; align-items: center; justify-content: center;
+        color: #38bdf8; font-size: 0.9rem; flex-shrink: 0;
+    }
+    .next-step-label { color: #38bdf8; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.15rem; }
+    .next-step-desc  { color: rgba(148,163,184,0.85); font-size: 0.83rem; max-width: 480px; }
+    .btn-next-step {
+        display: inline-flex; align-items: center; gap: 0.5rem; flex-shrink: 0;
+        background: linear-gradient(135deg, #0ea5e9, #6366f1);
+        color: #fff; font-weight: 700; font-size: 0.9rem;
+        padding: 0.65rem 1.5rem; border-radius: 50px;
+        text-decoration: none;
+        box-shadow: 0 4px 18px rgba(14,165,233,0.3);
+        transition: transform 0.2s, box-shadow 0.2s;
+        white-space: nowrap;
+    }
+    .btn-next-step:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(14,165,233,0.45); color: #fff; }
+</style>
+
+<!-- ── Upload Loader Overlay ── -->
+<div id="upload-loader-overlay">
+    <div class="scan-loader-box">
+        <div class="scan-spinner"></div>
+        <div class="scan-loader-title">Uploading Resumes&hellip;</div>
+        <div class="scan-loader-sub" id="upload-loader-sub">Storing your files securely</div>
+        <div class="scan-loader-steps">
+            <div class="scan-step" id="up-step-1"><span class="scan-step-icon">&#128193;</span><span>Reading selected files</span></div>
+            <div class="scan-step" id="up-step-2"><span class="scan-step-icon">&#128228;</span><span>Uploading to server</span></div>
+            <div class="scan-step" id="up-step-3"><span class="scan-step-icon">&#129504;</span><span>Extracting candidate info</span></div>
+            <div class="scan-step" id="up-step-4"><span class="scan-step-icon">&#9989;</span><span>Saving to storage</span></div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ── Upload Loader ── */
+#upload-loader-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(6, 12, 26, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+#upload-loader-overlay.active { display: flex; }
+.scan-loader-box {
+    background: linear-gradient(135deg, rgba(14,165,233,0.10) 0%, rgba(99,102,241,0.10) 100%);
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 20px;
+    padding: 2.75rem 3rem;
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    animation: loaderPop .35s cubic-bezier(.22,1,.36,1);
+}
+@keyframes loaderPop { from {opacity:0;transform:scale(.9) translateY(16px);} to {opacity:1;transform:none;} }
+.scan-spinner {
+    width: 68px; height: 68px; border-radius: 50%;
+    border: 4px solid rgba(56,189,248,0.12);
+    border-top-color: #38bdf8; border-right-color: #818cf8;
+    animation: spin .85s linear infinite;
+    margin: 0 auto 1.6rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.scan-loader-title { font-size:1.2rem; font-weight:700; color:#f8fafc; margin-bottom:.35rem; }
+.scan-loader-sub { font-size:0.8rem; color:#64748b; margin-bottom:1.6rem; }
+.scan-loader-steps { display:flex; flex-direction:column; gap:.5rem; text-align:left; }
+.scan-step { display:flex; align-items:center; gap:.6rem; font-size:0.81rem; color:rgba(255,255,255,0.22); transition: color .4s ease, transform .4s ease; padding: 2px 0; }
+.scan-step.active { color:#38bdf8; transform:translateX(5px); }
+.scan-step.done   { color:#4ade80; }
+.scan-step-icon   { font-size:.9rem; flex-shrink:0; width:20px; text-align:center; }
+</style>
+
 <script>
-document.getElementById('resume-folder').addEventListener('change', function() {
-    var n = this.files.length;
-    document.getElementById('file-count').textContent = n ? n + ' file(s) selected' : 'No folder chosen';
-});
+    function switchBulkTab(tab) {
+        var panels = { file: 'panel-file', folder: 'panel-folder', url: 'panel-url' };
+        var btns   = { file: 'btn-file',   folder: 'btn-folder',   url: 'btn-url' };
+        Object.keys(panels).forEach(function(k) {
+            var panel = document.getElementById(panels[k]);
+            var btn   = document.getElementById(btns[k]);
+            if (panel) panel.style.display = (k === tab) ? '' : 'none';
+            if (btn)   btn.classList.toggle('active', k === tab);
+        });
+    }
+
+    function showUploadLoader(steps, subs, overlayId, subtitleId) {
+        var overlay = document.getElementById(overlayId);
+        overlay.classList.add('active');
+        var delays = [0, 1500, 4000, 7000];
+        steps.forEach(function(id, i) {
+            setTimeout(function() {
+                if (i > 0) {
+                    var prev = document.getElementById(steps[i-1]);
+                    if (prev) { prev.classList.remove('active'); prev.classList.add('done'); }
+                }
+                var el = document.getElementById(id);
+                if (el) el.classList.add('active');
+            }, delays[i]);
+        });
+        subs.forEach(function(txt, i) {
+            setTimeout(function() {
+                var sub = document.getElementById(subtitleId);
+                if (sub) sub.innerHTML = txt;
+            }, delays[i]);
+        });
+    }
+
+    // File upload form
+    var fileForm = document.getElementById('file-form');
+    if (fileForm) {
+        fileForm.addEventListener('submit', function(e) {
+            var files = document.getElementById('resume-files').files;
+            if (!files || files.length === 0) return;
+            showUploadLoader(
+                ['up-step-1','up-step-2','up-step-3','up-step-4'],
+                ['Reading selected files&hellip;','Uploading to server&hellip;','Extracting candidate info&hellip;','Saving to storage&hellip;'],
+                'upload-loader-overlay', 'upload-loader-sub'
+            );
+            var btn = document.getElementById('file-submit-btn');
+            var btnText = document.getElementById('file-btn-text');
+            setTimeout(function() {
+                if (btn) btn.disabled = true;
+                if (btnText) btnText.innerHTML = '&#9203; Uploading&hellip;';
+            }, 100);
+        });
+    }
+
+    // Folder upload form
+    var folderForm = document.getElementById('folder-form');
+    if (folderForm) {
+        folderForm.addEventListener('submit', function(e) {
+            var files = document.getElementById('resume-folder').files;
+            if (!files || files.length === 0) return;
+            showUploadLoader(
+                ['up-step-1','up-step-2','up-step-3','up-step-4'],
+                ['Reading selected files&hellip;','Uploading to server&hellip;','Extracting candidate info&hellip;','Saving to storage&hellip;'],
+                'upload-loader-overlay', 'upload-loader-sub'
+            );
+            var btn = document.getElementById('folder-submit-btn');
+            var btnText = document.getElementById('folder-btn-text');
+            setTimeout(function() {
+                if (btn) btn.disabled = true;
+                if (btnText) btnText.innerHTML = '&#9203; Uploading&hellip;';
+            }, 100);
+        });
+    }
+
+    // URL import form
+    var urlForm = document.getElementById('url-form');
+    if (urlForm) {
+        urlForm.addEventListener('submit', function() {
+            var urls = document.getElementById('resume-urls').value.trim();
+            if (!urls) return;
+            showUploadLoader(
+                ['up-step-1','up-step-2','up-step-3','up-step-4'],
+                ['Parsing URLs&hellip;','Downloading files&hellip;','Extracting candidate info&hellip;','Saving to storage&hellip;'],
+                'upload-loader-overlay', 'upload-loader-sub'
+            );
+            document.getElementById('url-btn-text').textContent = 'Importing…';
+            document.getElementById('url-btn-spinner').style.display = 'inline-block';
+        });
+    }
+
+    // File picker count feedback
+    document.getElementById('resume-files').addEventListener('change', function () {
+        var n = this.files.length;
+        document.getElementById('file-file-count').textContent = n ? n + ' file(s) selected' : 'No files chosen';
+    });
+
+    // Folder file count feedback
+    document.getElementById('resume-folder').addEventListener('change', function () {
+        var n = this.files.length;
+        document.getElementById('file-count').textContent = n ? n + ' file(s) selected' : 'No folder chosen';
+    });
+
+    // Drag & drop for file upload zone
+    var fileDZ = document.getElementById('file-drop-zone');
+    var fileInput = document.getElementById('resume-files');
+    if (fileDZ && fileInput) {
+        fileDZ.addEventListener('dragover', function(e) { e.preventDefault(); fileDZ.style.borderColor = 'rgba(56,189,248,0.6)'; fileDZ.style.background = 'rgba(56,189,248,0.06)'; });
+        fileDZ.addEventListener('dragleave', function() { fileDZ.style.borderColor = ''; fileDZ.style.background = ''; });
+        fileDZ.addEventListener('drop', function(e) {
+            e.preventDefault(); fileDZ.style.borderColor = ''; fileDZ.style.background = '';
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                var n = e.dataTransfer.files.length;
+                document.getElementById('file-file-count').textContent = n + ' file(s) selected';
+            }
+        });
+    }
+
+    // Auto-scroll to success message if present
+    var successEl = document.getElementById('upload-success');
+    if (successEl) {
+        setTimeout(function() {
+            successEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+    }
+
+    // If page was loaded after a URL import, keep URL tab active
+    {% if active_tab == 'url' %}
+    switchBulkTab('url');
+    {% endif %}
 </script>
 {% endblock %}

@@ -18,4 +18,14 @@ urlpatterns = [
     # Match stored resumes with JD (quality check, specs, certificates)
     path('match-stored/', views.match_stored_resumes, name='match_stored'),
     path('delete/<int:pk>/', views.delete_resume, name='delete_resume'),
+    # Scan history - JD-wise grouped results
+    path('scan-history/', views.scan_history, name='scan_history'),
+    path('scan-history/delete/<int:scan_run_id>/', views.delete_scan_run, name='delete_scan_run'),
+    path('scan-history/bulk-delete/', views.bulk_delete_scan_runs, name='bulk_delete_scan_runs'),
+    # AJAX: extract job title from uploaded JD file
+    path('ajax/extract-jd-title/', views.extract_jd_title_ajax, name='extract_jd_title_ajax'),
+    # AJAX: fetch JD text + title by internal Job ID
+    path('ajax/fetch-jd-by-id/', views.fetch_jd_by_id_ajax, name='fetch_jd_by_id_ajax'),
+    # AJAX: fetch JD from external URL
+    path('ajax/fetch-jd-from-url/', views.fetch_jd_from_url_ajax, name='fetch_jd_from_url_ajax'),
 ]

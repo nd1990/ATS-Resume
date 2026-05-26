@@ -48,16 +48,26 @@
         }
 
         .nav-link {
-            color: var(--text-secondary) !important;
+            color: rgba(148,163,184,0.75) !important;
             font-weight: 500;
-            margin: 0 0.5rem;
+            margin: 0 0.25rem;
+            padding: 0.4rem 0.9rem !important;
+            border-radius: 50px;
             transition: all 0.2s;
+            position: relative;
         }
 
-        .nav-link:hover,
+        .nav-link:hover {
+            color: #f8fafc !important;
+            background: rgba(255,255,255,0.06);
+        }
+
         .nav-link.active {
-            color: var(--text-primary) !important;
-            text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+            color: #38bdf8 !important;
+            background: rgba(56,189,248,0.12);
+            border: 1px solid rgba(56,189,248,0.25);
+            font-weight: 600;
+            box-shadow: 0 0 12px rgba(56,189,248,0.12);
         }
 
         .btn-primary {
@@ -212,10 +222,16 @@
                 <ul class="navbar-nav mx-auto align-items-center">
                     {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'bulk_upload' %}">Bulk Upload</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'bulk_upload' %}active{% endif %}"
+                           href="{% url 'bulk_upload' %}">Bulk Upload</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'match_stored' %}">Match Stored</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'match_stored' %}active{% endif %}"
+                           href="{% url 'match_stored' %}">Match Stored</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'scan_history' %}active{% endif %}"
+                           href="{% url 'scan_history' %}">Scan History</a>
                     </li>
                     {% endif %}
                 </ul>

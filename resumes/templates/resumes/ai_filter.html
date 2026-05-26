@@ -6,34 +6,545 @@
         <div class="card bg-card-bg shadow-sm border-0">
             <div class="card-body p-4 p-md-5">
                 <div class="d-flex align-items-center gap-2 mb-2">
-                    <h2 class="mb-0 text-accent">AI Filter & Quality Check</h2>
+                    <h2 class="mb-0 text-accent">AI Filter &amp; Quality Check</h2>
                     <span class="badge bg-primary">Batch</span>
                 </div>
                 <p class="text-secondary-c mb-4">
-                    Upload multiple candidate resumes and paste one job description. We will match all documents, certificates, and values, then filter to find the best candidates and generate reports.
+                    Upload multiple candidate resumes and provide a job description (paste text, upload a file, or
+                    fetch from a link).
+                    We will match all documents, certificates, and values, then filter to find the best candidates
+                    and generate reports.
                 </p>
 
-                <form method="post" enctype="multipart/form-data" novalidate>
+                <form method="post" enctype="multipart/form-data" novalidate id="ai-filter-form">
                     {% csrf_token %}
+
+                    {# ── JD Input ── #}
                     <div class="mb-4">
-                        <label class="form-label">{{ form.job_description.label }}</label>
-                        {{ form.job_description }}
-                        {% if form.job_description.errors %}
-                            <div class="text-danger small mt-1">{{ form.job_description.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label">Candidate Resumes</label>
-                        <input type="file" name="resume_files" multiple accept=".pdf,.docx,.png,.jpg,.jpeg" class="form-control">
-                        <div class="form-text">Upload multiple PDF, DOCX, PNG or JPG. We will scan, match documents & certificates, and generate reports.</div>
+                        <label class="form-label fw-bold text-white mb-3">JOB DESCRIPTION</label>
+
                         {% if form.non_field_errors %}
-                            <div class="text-danger small mt-1">{{ form.non_field_errors.0 }}</div>
+                        <div class="alert alert-danger py-2 small mb-3">{{ form.non_field_errors.0 }}</div>
+                        {% endif %}
+
+                        <div class="mb-3 position-relative">
+                            <label for="id_jd_title" class="form-label d-flex align-items-center gap-2">
+                                JOB TITLE / ROLE NAME
+                                <span class="auto-badge" id="jd-title-auto-badge" style="display:none;">&#10022; auto-filled</span>
+                            </label>
+                            <input type="text" name="jd_title" id="id_jd_title" class="form-control"
+                                placeholder="Auto-filled from JD content &mdash; or type manually"
+                                oninput="onTitleManualEdit()">
+                        </div>
+
+                        {# Tab switcher #}
+                        <div class="jd-tab-switcher d-flex gap-0 mb-3 rounded-3 overflow-hidden"
+                            style="border: 1px solid rgba(255,255,255,0.1); width: fit-content;">
+                            <button type="button" class="jd-tab-btn active" id="tab-file" onclick="switchJDTab('file')">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" class="me-1">
+                                    <path
+                                        d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+                                    <path
+                                        d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z" />
+                                </svg>
+                                Upload File
+                            </button>
+                            <button type="button" class="jd-tab-btn" id="tab-paste" onclick="switchJDTab('paste')">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" class="me-1">
+                                    <path
+                                        d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
+                                    <path
+                                        d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
+                                </svg>
+                                Paste Text
+                            </button>
+                            <button type="button" class="jd-tab-btn" id="tab-jd-link" onclick="switchJDTab('jd-link')">
+                                &#128279; JD Link
+                            </button>
+                        </div>
+
+                        {# Upload File Panel — shown by default #}
+                        <div id="panel-file">
+                            <div class="jd-upload-zone" id="jd-drop-zone">
+                                <div class="jd-upload-icon">
+                                    <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                                    </svg>
+                                </div>
+                                <p class="jd-upload-text">Drag &amp; drop your JD file here, or</p>
+                                <label for="id_jd_file" class="btn btn-sm mt-1 mb-2"
+                                    style="cursor:pointer; border: 1px solid rgba(56,189,248,0.5); color: #38bdf8; background: transparent;">
+                                    Browse File
+                                </label>
+                                {{ form.jd_file }}
+                                <p class="jd-upload-hint">PDF, DOCX, JPG or PNG supported</p>
+                                <div id="jd-file-name" class="jd-file-chosen" style="display:none;"></div>
+                            </div>
+                            {% if form.jd_file.errors %}
+                            <div class="text-danger small mt-2">{{ form.jd_file.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        {# Paste Text Panel — hidden by default #}
+                        <div id="panel-paste" style="display:none;">
+                            {{ form.job_description }}
+                            {% if form.job_description.errors %}
+                            <div class="text-danger small mt-1">{{ form.job_description.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        {# JD Link Panel — hidden by default #}
+                        <div id="panel-jd-link" style="display:none;">
+                            <div class="jd-link-panel rounded-3 p-4"
+                                style="background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.15);">
+                                <div class="d-flex gap-2 align-items-start mb-3">
+                                    <div class="flex-grow-1">
+                                        <label class="form-label text-secondary-c small fw-semibold mb-1">JD URL</label>
+                                        <input type="url" id="jd-link-input"
+                                            class="form-control bg-dark text-white border-secondary"
+                                            placeholder="https://www.linkedin.com/jobs/view/...">
+                                    </div>
+                                    <div class="pt-4 mt-1">
+                                        <button type="button" id="fetch-url-btn" class="btn btn-primary"
+                                            onclick="fetchJDFromURL()">
+                                            <span id="fetch-url-btn-text">&#128269; Fetch JD</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="text-secondary-c small mb-0">
+                                    Paste a direct link to the job posting (LinkedIn, Indeed, Glassdoor, company
+                                    career pages, etc.). We'll extract the job description text automatically.
+                                </p>
+
+                                <div id="jd-url-fetch-status" class="mt-3" style="display:none;"></div>
+
+                                <div id="jd-url-fetched-preview" class="mt-3" style="display:none;">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="fw-bold text-white" id="url-fetched-title-label"></span>
+                                        <span class="auto-badge">&#10003; Loaded</span>
+                                    </div>
+                                    <textarea id="url-fetched-jd-preview"
+                                        class="form-control bg-dark text-white border-secondary small" rows="6"
+                                        readonly style="font-size:0.78rem;resize:vertical;opacity:0.8;"></textarea>
+                                    <div class="mt-2 d-flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-info"
+                                            onclick="editURLFetchedJD()">&#9998; Edit before scan</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            onclick="clearURLFetchedJD()">&#10005; Clear</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# ── Resume Files ── #}
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-white">CANDIDATE RESUMES</label>
+                        <input type="file" name="resume_files" multiple accept=".pdf,.docx,.png,.jpg,.jpeg"
+                            class="form-control">
+                        <div class="form-text">Upload multiple PDF, DOCX, PNG or JPG. We will scan, match documents
+                            &amp; certificates, and generate reports.</div>
+                        {% if form.non_field_errors %}
+                        {% for err in form.non_field_errors %}
+                        {% if 'resume' in err|lower %}
+                        <div class="text-danger small mt-1">{{ err }}</div>
+                        {% endif %}
+                        {% endfor %}
                         {% endif %}
                     </div>
-                    <button type="submit" class="btn btn-primary btn-lg px-5">Scan & Filter Candidates</button>
+
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <button type="submit" class="btn btn-primary btn-lg px-5">Scan &amp; Filter Candidates</button>
+                        <a href="{% url 'scan_history' %}" class="btn btn-outline-secondary">&#128197; View Scan History</a>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .jd-tab-btn {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.45);
+        padding: 0.45rem 1rem;
+        font-size: 0.82rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .jd-tab-btn.active {
+        background: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+    }
+
+    .jd-tab-btn:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.75);
+    }
+
+    .jd-tab-btn#tab-jd-link {
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .jd-upload-zone {
+        border: 2px dashed rgba(56, 189, 248, 0.25);
+        border-radius: 12px;
+        padding: 2.5rem 2rem;
+        text-align: center;
+        transition: border-color 0.25s, background 0.25s;
+        cursor: pointer;
+        background: rgba(56, 189, 248, 0.03);
+    }
+
+    .jd-upload-zone.dragover {
+        border-color: #38bdf8;
+        background: rgba(56, 189, 248, 0.08);
+    }
+
+    .jd-upload-icon {
+        color: rgba(56, 189, 248, 0.5);
+        margin-bottom: 0.75rem;
+    }
+
+    .jd-upload-text {
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 0;
+        font-size: 0.9rem;
+    }
+
+    .jd-upload-hint {
+        color: rgba(255, 255, 255, 0.3);
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0;
+    }
+
+    .jd-file-chosen {
+        margin-top: 0.75rem;
+        padding: 0.5rem 1rem;
+        background: rgba(56, 189, 248, 0.1);
+        border-radius: 8px;
+        color: #38bdf8;
+        font-size: 0.82rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    #id_jd_file {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .fetch-status-ok {
+        background: rgba(74, 222, 128, 0.1);
+        border: 1px solid rgba(74, 222, 128, 0.3);
+        color: #4ade80;
+        border-radius: 8px;
+        padding: .5rem .8rem;
+        font-size: .82rem;
+    }
+
+    .fetch-status-err {
+        background: rgba(248, 113, 113, 0.1);
+        border: 1px solid rgba(248, 113, 113, 0.3);
+        color: #f87171;
+        border-radius: 8px;
+        padding: .5rem .8rem;
+        font-size: .82rem;
+    }
+
+    .fetch-status-loading {
+        background: rgba(56, 189, 248, 0.08);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        color: #38bdf8;
+        border-radius: 8px;
+        padding: .5rem .8rem;
+        font-size: .82rem;
+    }
+</style>
+
+<style>
+.auto-badge {
+    background: rgba(56,189,248,0.12);
+    color: #38bdf8;
+    border: 1px solid rgba(56,189,248,0.3);
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.15rem 0.55rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:scale(0.85); } to { opacity:1; transform:none; } }
+</style>
+
+<script>
+    var _titleAutoFilled = false;
+    var _pasteTimer;
+    var _urlFetchedJDText = '';
+    var _activeTab = 'file';
+    var CSRF_TOKEN = '{{ csrf_token }}';
+    var EXTRACT_URL = '{% url "extract_jd_title_ajax" %}';
+    var FETCH_JD_FROM_URL = '{% url "fetch_jd_from_url_ajax" %}';
+
+    function autoFillTitle(value, showBadge) {
+        var titleInput = document.getElementById('id_jd_title');
+        var badge = document.getElementById('jd-title-auto-badge');
+        if (!titleInput) return;
+        if (!titleInput.value || _titleAutoFilled) {
+            titleInput.value = value;
+            _titleAutoFilled = !!value;
+            if (badge) badge.style.display = (value && showBadge !== false) ? 'inline-flex' : 'none';
+        }
+    }
+
+    function setTitleLoading(loading) {
+        var inp = document.getElementById('id_jd_title');
+        var badge = document.getElementById('jd-title-auto-badge');
+        if (!inp) return;
+        if (loading) {
+            inp.placeholder = '⏳ Reading JD content…';
+            inp.disabled = true;
+            if (badge) { badge.textContent = '⏳ reading…'; badge.style.display = 'inline-flex'; }
+        } else {
+            inp.placeholder = 'Auto-filled from JD content — or type manually';
+            inp.disabled = false;
+        }
+    }
+
+    function fetchTitleFromFile(file) {
+        setTitleLoading(true);
+        var fd = new FormData();
+        fd.append('jd_file', file);
+        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+        fetch(EXTRACT_URL, { method: 'POST', body: fd })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                setTitleLoading(false);
+                if (data.title) {
+                    _titleAutoFilled = false;
+                    autoFillTitle(data.title);
+                } else {
+                    var inp = document.getElementById('id_jd_title');
+                    if (inp) inp.placeholder = 'Could not extract title — type manually';
+                    var badge = document.getElementById('jd-title-auto-badge');
+                    if (badge) badge.style.display = 'none';
+                }
+            })
+            .catch(function() {
+                setTitleLoading(false);
+            });
+    }
+
+    function extractTitleFromText(text) {
+        var lines = text.split('\n');
+        var labelRe = /^(?:job\s*title|position|role|title)\s*[:\-–]\s*(.+)/i;
+        var skipRe = /^(job\s*description|company|location|salary|date|about|overview|responsibilities|requirements|qualifications|benefits)/i;
+        for (var i = 0; i < Math.min(lines.length, 20); i++) {
+            var line = lines[i].replace(/^#+\s*/, '').replace(/^\*+\s*/, '').trim();
+            var m = labelRe.exec(line);
+            if (m && m[1].length > 3 && m[1].length < 120) return m[1].trim();
+        }
+        for (var i = 0; i < Math.min(lines.length, 20); i++) {
+            var line = lines[i].replace(/^#+\s*/, '').replace(/^\*+\s*/, '').trim();
+            if (!line || skipRe.test(line)) continue;
+            if (line.length > 3 && line.length < 120) return line;
+        }
+        return '';
+    }
+
+    function onTitleManualEdit() {
+        _titleAutoFilled = false;
+        var badge = document.getElementById('jd-title-auto-badge');
+        if (badge) badge.style.display = 'none';
+    }
+
+    function switchJDTab(tab) {
+        var panels = { file: 'panel-file', paste: 'panel-paste', 'jd-link': 'panel-jd-link' };
+        var tabs = { file: 'tab-file', paste: 'tab-paste', 'jd-link': 'tab-jd-link' };
+
+        _activeTab = tab;
+
+        Object.keys(panels).forEach(function (k) {
+            document.getElementById(panels[k]).style.display = (k === tab) ? '' : 'none';
+            var btn = document.getElementById(tabs[k]);
+            if (btn) btn.classList.toggle('active', k === tab);
+        });
+
+        var jdTextarea = document.getElementById('id_job_description');
+        var jdFileInput = document.getElementById('id_jd_file');
+        if (tab === 'paste') {
+            if (jdFileInput) jdFileInput.value = '';
+            _urlFetchedJDText = '';
+        } else if (tab === 'file') {
+            if (jdTextarea) jdTextarea.value = '';
+            _urlFetchedJDText = '';
+        } else if (tab === 'jd-link') {
+            if (jdFileInput) jdFileInput.value = '';
+            if (jdTextarea) jdTextarea.value = '';
+        }
+    }
+
+    // ── JD Link: fetch from external URL ──────────────────────────────────────
+    function fetchJDFromURL() {
+        var url = (document.getElementById('jd-link-input').value || '').trim();
+        if (!url) {
+            setURLFetchStatus('error', 'Please enter a URL.');
+            return;
+        }
+
+        setURLFetchStatus('loading', '&#9203; Fetching JD from URL&hellip;');
+        document.getElementById('fetch-url-btn-text').innerHTML = '&#9203; Fetching&hellip;';
+        document.getElementById('fetch-url-btn').disabled = true;
+        document.getElementById('jd-url-fetched-preview').style.display = 'none';
+
+        var fd = new FormData();
+        fd.append('jd_url', url);
+        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+        fetch(FETCH_JD_FROM_URL, { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                document.getElementById('fetch-url-btn-text').innerHTML = '&#128269; Fetch JD';
+                document.getElementById('fetch-url-btn').disabled = false;
+
+                if (!data.ok) {
+                    setURLFetchStatus('error', '&#10005; ' + (data.error || 'Could not extract JD.'));
+                    return;
+                }
+
+                _urlFetchedJDText = data.description || '';
+
+                if (data.title) {
+                    _titleAutoFilled = false;
+                    autoFillTitle(data.title);
+                }
+
+                var preview = document.getElementById('jd-url-fetched-preview');
+                document.getElementById('url-fetched-title-label').textContent = data.title || 'Job Description';
+                document.getElementById('url-fetched-jd-preview').value = _urlFetchedJDText;
+                preview.style.display = '';
+                preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                var escTitle = String(data.title || url).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                setURLFetchStatus('ok', '&#10003; Extracted JD from <strong>' + escTitle + '</strong>');
+            })
+            .catch(function () {
+                document.getElementById('fetch-url-btn-text').innerHTML = '&#128269; Fetch JD';
+                document.getElementById('fetch-url-btn').disabled = false;
+                setURLFetchStatus('error', '&#10005; Network error. Is the server running?');
+            });
+    }
+
+    function setURLFetchStatus(type, html) {
+        var el = document.getElementById('jd-url-fetch-status');
+        el.className = 'mt-3 fetch-status-' + (type === 'ok' ? 'ok' : type === 'error' ? 'err' : 'loading');
+        el.innerHTML = html;
+        el.style.display = '';
+    }
+
+    function editURLFetchedJD() {
+        var ta = document.getElementById('id_job_description');
+        if (ta) ta.value = _urlFetchedJDText;
+        switchJDTab('paste');
+    }
+
+    function clearURLFetchedJD() {
+        _urlFetchedJDText = '';
+        document.getElementById('jd-url-fetched-preview').style.display = 'none';
+        document.getElementById('jd-url-fetch-status').style.display = 'none';
+        document.getElementById('jd-link-input').value = '';
+        var badge = document.getElementById('jd-title-auto-badge');
+        if (badge) badge.style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var jdFileInput = document.getElementById('id_jd_file');
+        var fileNameDiv = document.getElementById('jd-file-name');
+        var jdTextarea  = document.getElementById('id_job_description');
+
+        if (jdFileInput) {
+            jdFileInput.addEventListener('change', function () {
+                if (this.files && this.files[0]) {
+                    var f = this.files[0];
+                    fileNameDiv.innerHTML = '\u2713 ' + f.name;
+                    fileNameDiv.style.display = 'inline-flex';
+                    fetchTitleFromFile(f);
+                } else {
+                    fileNameDiv.style.display = 'none';
+                }
+            });
+        }
+
+        if (jdTextarea) {
+            jdTextarea.addEventListener('input', function () {
+                clearTimeout(_pasteTimer);
+                var text = this.value;
+                _pasteTimer = setTimeout(function () {
+                    var extracted = extractTitleFromText(text);
+                    if (extracted) autoFillTitle(extracted);
+                }, 500);
+            });
+        }
+
+        var dropZone = document.getElementById('jd-drop-zone');
+        if (dropZone && jdFileInput) {
+            dropZone.addEventListener('click', function (e) {
+                if (e.target.tagName !== 'LABEL') jdFileInput.click();
+            });
+            dropZone.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            dropZone.addEventListener('dragleave', function () {
+                dropZone.classList.remove('dragover');
+            });
+            dropZone.addEventListener('drop', function (e) {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    var dt = new DataTransfer();
+                    dt.items.add(e.dataTransfer.files[0]);
+                    jdFileInput.files = dt.files;
+                    var f = e.dataTransfer.files[0];
+                    fileNameDiv.innerHTML = '\u2713 ' + f.name;
+                    fileNameDiv.style.display = 'inline-flex';
+                    fetchTitleFromFile(f);
+                    switchJDTab('file');
+                }
+            });
+        }
+
+        // JD Link input: allow pressing Enter to fetch
+        var jli = document.getElementById('jd-link-input');
+        if (jli) {
+            jli.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); fetchJDFromURL(); }
+            });
+        }
+
+        // Before form submit, sync the URL-fetched JD text into the textarea
+        var form = document.getElementById('ai-filter-form');
+        if (form) {
+            form.addEventListener('submit', function () {
+                var ta = document.getElementById('id_job_description');
+                if (!ta) return;
+                if (_activeTab === 'jd-link' && _urlFetchedJDText) {
+                    ta.value = _urlFetchedJDText;
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

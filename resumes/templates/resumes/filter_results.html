@@ -3,65 +3,151 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
-        <h2 class="mb-1 text-accent">Filter Results – Best Candidates</h2>
-        <p class="text-secondary-c small mb-0">Sorted by match score (highest first). Specs, certificates &amp; quality checked. Generate full report for any candidate.</p>
+        <h2 class="mb-1 text-accent">Filter Results{% if scan_run.jd_title %}: {{ scan_run.jd_title }}{% endif %}</h2>
+        <p class="text-secondary-c small mb-0">Sorted by weighted score. Deep scan: skills, experience &amp; certifications.</p>
     </div>
     <div class="d-flex gap-2">
+        <a href="{% url 'scan_history' %}" class="btn btn-outline-secondary rounded-pill">&#128197; Scan History</a>
         <a href="{% url 'match_stored' %}" class="btn btn-outline-light rounded-pill">Match Stored</a>
         <a href="{% url 'ai_filter' %}" class="btn btn-primary rounded-pill">New Scan</a>
     </div>
 </div>
 
-<div class="card bg-transparent border-0">
-    <div class="table-responsive">
-        <table class="table table-dark table-hover align-middle mb-0" style="background-color: transparent;">
-            <thead class="bg-card-bg">
-                <tr>
-                    <th class="py-3 ps-4 rounded-start">#</th>
-                    <th class="py-3">Candidate</th>
-                    <th class="py-3">Score</th>
-                    <th class="py-3">Recommendation</th>
-                    <th class="py-3 pe-4 rounded-end text-end">Report</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in results %}
-                <tr>
-                    <td class="ps-4 text-secondary-c">{{ forloop.counter }}</td>
-                    <td>
-                        <span class="fw-bold text-white">{{ r.candidate_name }}</span>
-                    </td>
-                    <td>
-                        <span class="text-accent fw-bold">{{ r.final_weighted_score }}%</span>
-                    </td>
-                    <td>
-                        <span class="badge
-                            {% if r.recommendation == 'Hire' %}bg-success
-                            {% elif r.recommendation == 'Hold' %}bg-warning text-dark
-                            {% else %}bg-danger{% endif %}">
-                            {{ r.recommendation }}
-                        </span>
-                    </td>
-                    <td class="text-end pe-4">
-                        <a href="{% url 'scan_report' r.pk %}" class="btn btn-sm btn-outline-light" target="_blank">View Report</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center py-5 text-secondary-c">No results in this scan.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+{% if results %}
+
+{# Top candidate highlight card #}
+{% for r in results %}
+{% if forloop.counter == 1 %}
+<div class="card border-0 shadow-sm mb-4" style="background:linear-gradient(135deg,rgba(14,165,233,0.12),rgba(99,102,241,0.10));border:1px solid rgba(56,189,248,0.25)!important;">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center justify-content-center text-accent" style="font-size:2.2rem;width:3.5rem;height:3.5rem;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.3);border-radius:50%;flex-shrink:0;">🏆</div>
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="badge bg-warning text-dark rounded-pill px-2 py-1" style="font-size:0.7rem;">&#11088; Top Candidate</span>
+                        {% if r.recommendation == 'Hire' %}<span class="badge bg-success rounded-pill px-2">Hire</span>{% elif r.recommendation == 'Hold' %}<span class="badge bg-warning text-dark rounded-pill px-2">Hold</span>{% else %}<span class="badge bg-danger rounded-pill px-2">{{ r.recommendation }}</span>{% endif %}
+                    </div>
+                    <h4 class="mb-0 text-white fw-bold">{{ r.candidate_name }}</h4>
+                    <small class="text-secondary-c">{{ r.qa_verdict }}</small>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-4 flex-wrap">
+                <div class="text-center">
+                    <div class="text-accent fw-bold" style="font-size:1.8rem;">{{ r.final_weighted_score }}%</div>
+                    <small class="text-secondary-c">Overall</small>
+                </div>
+                <div class="text-center">
+                    <div class="fw-bold text-white">{{ r.skill_match_percentage }}%</div>
+                    <small class="text-secondary-c">Skills</small>
+                </div>
+                <div class="text-center">
+                    <div class="fw-bold text-white">{% if r.resume_experience_years %}{{ r.resume_experience_years }}yr{% else %}-{% endif %}</div>
+                    <small class="text-secondary-c">Experience{% if r.jd_experience_years %} <span style="font-size:0.65rem;">(need {{ r.jd_experience_years }}+)</span>{% endif %}</small>
+                </div>
+                <a href="{% url 'scan_report' r.pk %}" class="btn btn-primary px-4 rounded-pill" target="_blank">Full Report</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{# All candidates table #}
+<div class="card bg-card-bg border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark align-middle mb-0" style="background:transparent;">
+                <thead style="background:rgba(15,23,42,0.7);">
+                    <tr>
+                        <th class="py-3 ps-4">#</th>
+                        <th class="py-3">Candidate</th>
+                        <th class="py-3 text-center">Score</th>
+                        <th class="py-3 text-center">Skills</th>
+                        <th class="py-3 text-center">Experience</th>
+                        <th class="py-3 text-center">Certs</th>
+                        <th class="py-3 text-center">Recommendation</th>
+                        <th class="py-3 pe-4 text-end">Report</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <td class="ps-4 text-secondary-c">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="fw-bold text-white">{{ r.candidate_name }}</div>
+                            <small class="text-secondary-c" style="font-size:0.72rem;">{{ r.qa_verdict|truncatechars:55 }}</small>
+                        </td>
+                        <td class="text-center">
+                            {% if r.final_weighted_score >= 80 %}
+                            <span class="fw-bold text-success">{{ r.final_weighted_score }}%</span>
+                            {% elif r.final_weighted_score >= 55 %}
+                            <span class="fw-bold text-warning">{{ r.final_weighted_score }}%</span>
+                            {% else %}
+                            <span class="fw-bold text-danger">{{ r.final_weighted_score }}%</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if r.skill_match_percentage >= 70 %}
+                            <span class="text-success fw-bold">{{ r.skill_match_percentage }}%</span>
+                            {% elif r.skill_match_percentage >= 40 %}
+                            <span class="text-warning fw-bold">{{ r.skill_match_percentage }}%</span>
+                            {% else %}
+                            <span class="text-danger fw-bold">{{ r.skill_match_percentage }}%</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="fw-bold text-white">{{ r.resume_experience_years|default:"-" }}yr</span>
+                            {% if r.jd_experience_years %}<small class="d-block text-secondary-c" style="font-size:0.65rem;">need {{ r.jd_experience_years }}+</small>{% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if 'All Mandatory' in r.certification_status %}
+                            <span class="badge bg-success rounded-pill" style="font-size:0.68rem;">&#10003; Met</span>
+                            {% elif 'Missing' in r.certification_status %}
+                            <span class="badge bg-danger rounded-pill" style="font-size:0.68rem;">Missing</span>
+                            {% else %}
+                            <span class="badge bg-secondary rounded-pill" style="font-size:0.68rem;">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if r.recommendation == 'Hire' %}
+                            <span class="badge bg-success rounded-pill px-3">Hire</span>
+                            {% elif r.recommendation == 'Hold' %}
+                            <span class="badge bg-warning text-dark rounded-pill px-3">Hold</span>
+                            {% else %}
+                            <span class="badge bg-danger rounded-pill px-3">{{ r.recommendation }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <a href="{% url 'scan_report' r.pk %}" class="btn btn-sm btn-outline-light rounded-pill" target="_blank">Report</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-secondary-c">No results in this scan.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
-{% if results %}
-<div class="mt-4 d-flex justify-content-end">
+<div class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
     <form method="post" action="/resumes/ai-filter/results/{{ scan_run.id }}/clear/">
         {% csrf_token %}
-        <button type="submit" class="btn btn-outline-danger rounded-pill">Clear All Results</button>
+        <button type="submit" class="btn btn-outline-danger rounded-pill btn-sm">Clear All Results</button>
     </form>
 </div>
+
+{% else %}
+<div class="text-center py-5 text-secondary-c">
+    <p class="mb-3">No results in this scan.</p>
+    <a href="{% url 'match_stored' %}" class="btn btn-primary">Match Stored Resumes</a>
+</div>
 {% endif %}
+
+<style>
+tr:hover{background:rgba(56,189,248,0.04)!important;}
+</style>
 {% endblock %}

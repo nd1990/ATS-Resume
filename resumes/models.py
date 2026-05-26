@@ -120,13 +120,15 @@ class ScanRun(models.Model):
     """One batch: JD + multiple resumes scanned together."""
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='scan_runs')
     jd_text = models.TextField(help_text="Job description used for matching")
+    jd_title = models.CharField(max_length=255, blank=True, default='', help_text="Friendly JD / role name for grouping")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"ScanRun {self.id} ({self.created_at.date()})"
+        label = self.jd_title or f"ScanRun {self.id}"
+        return f"{label} ({self.created_at.date()})"
 
 
 class ScanResult(models.Model):
@@ -135,11 +137,13 @@ class ScanResult(models.Model):
     resume = models.ForeignKey(Resume, on_delete=models.CASCADE, related_name='scan_results')
     candidate_name = models.CharField(max_length=255, blank=True)
     # Scores
-    document_quality_score = models.FloatField(default=0.0)
-    document_quality_label = models.CharField(max_length=255, blank=True)
     skill_match_percentage = models.FloatField(default=0.0)
+    matched_skills = models.JSONField(default=list, blank=True)
+    missing_skills = models.JSONField(default=list, blank=True)
     experience_match_score = models.FloatField(default=0.0)
     experience_notes = models.TextField(blank=True)
+    resume_experience_years = models.IntegerField(null=True, blank=True)
+    jd_experience_years = models.IntegerField(null=True, blank=True)
     certification_status = models.CharField(max_length=255, blank=True)
     certification_details = models.TextField(blank=True)
     compliance_issues = models.JSONField(default=list)
@@ -148,6 +152,8 @@ class ScanResult(models.Model):
     recommendation = models.CharField(max_length=20, blank=True)  # Hire / Hold / Reject
     qa_grade = models.CharField(max_length=5, blank=True)  # A / B / C / D
     qa_verdict = models.TextField(blank=True)
+    improvement_suggestions = models.TextField(blank=True)
+    nursing_compliance = models.JSONField(default=dict, blank=True, help_text="Nursing-specific compliance check results (license, certs, sanctions, etc.)")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
