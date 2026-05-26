@@ -1,14 +1,16 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
+<div class="row">
+    <div class="col-lg-11 mx-auto">
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
         <h2 class="mb-1 text-accent">Filter Results{% if scan_run.jd_title %}: {{ scan_run.jd_title }}{% endif %}</h2>
         <p class="text-secondary-c small mb-0">Sorted by weighted score. Deep scan: skills, experience &amp; certifications.</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="{% url 'scan_history' %}" class="btn btn-outline-secondary rounded-pill">&#128197; Scan History</a>
-        <a href="{% url 'match_stored' %}" class="btn btn-outline-light rounded-pill">Match Stored</a>
+        <a href="{% url 'scan_history' %}" class="btn btn-outline-secondary rounded-pill py-2">&#128197; Scan History</a>
+        <a href="{% url 'match_stored' %}" class="btn btn-outline-light rounded-pill py-2 px-3">Match Stored</a>
         <a href="{% url 'ai_filter' %}" class="btn btn-primary rounded-pill">New Scan</a>
     </div>
 </div>
@@ -25,7 +27,6 @@
                 <div class="d-flex align-items-center justify-content-center text-accent" style="font-size:2.2rem;width:3.5rem;height:3.5rem;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.3);border-radius:50%;flex-shrink:0;">🏆</div>
                 <div>
                     <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="badge bg-warning text-dark rounded-pill px-2 py-1" style="font-size:0.7rem;">&#11088; Top Candidate</span>
                         {% if r.recommendation == 'Hire' %}<span class="badge bg-success rounded-pill px-2">Hire</span>{% elif r.recommendation == 'Hold' %}<span class="badge bg-warning text-dark rounded-pill px-2">Hold</span>{% else %}<span class="badge bg-danger rounded-pill px-2">{{ r.recommendation }}</span>{% endif %}
                     </div>
                     <h4 class="mb-0 text-white fw-bold">{{ r.candidate_name }}</h4>
@@ -139,7 +140,7 @@
         <button type="submit" class="btn btn-outline-danger rounded-pill btn-sm">Clear All Results</button>
     </form>
 </div>
-
+</div></div>
 {% else %}
 <div class="text-center py-5 text-secondary-c">
     <p class="mb-3">No results in this scan.</p>

@@ -8,7 +8,7 @@ def signup(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('home')
+            return redirect('bulk_upload')
     else:
         form = SignUpForm()
     return render(request, 'registration/signup.html', {'form': form})
@@ -16,6 +16,8 @@ def signup(request):
 
 
 def home(request):
+    if request.user.is_authenticated:
+        return redirect('bulk_upload')
     return render(request, 'core/home.html')
 
 def pricing(request):

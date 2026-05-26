@@ -18,10 +18,386 @@
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
-            /* Creative Extras */
             --gradient-primary: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
             --glass-bg: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
+            --sidebar-width: 260px;
+            --input-bg: rgba(15, 23, 42, 0.8);
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(0, 0, 0, 0.06);
+            --input-bg: #ffffff;
+            --border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="light"] .marketing-navbar {
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom-color: var(--border-color);
+        }
+        [data-theme="light"] .marketing-navbar .navbar-brand .text-white {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .marketing-navbar .nav-link {
+            color: var(--text-secondary) !important;
+        }
+        [data-theme="light"] .marketing-navbar .nav-link:hover {
+            color: var(--text-primary) !important;
+            background: rgba(0,0,0,0.04);
+        }
+
+        [data-theme="light"] .sidebar {
+            background: #ffffff;
+            border-right-color: var(--border-color);
+        }
+        [data-theme="light"] .sidebar-brand {
+            border-bottom-color: var(--border-color);
+        }
+        [data-theme="light"] .sidebar-brand-text {
+            color: var(--text-primary);
+        }
+        [data-theme="light"] .sidebar-link {
+            color: var(--text-secondary);
+        }
+        [data-theme="light"] .sidebar-link:hover {
+            color: var(--text-primary);
+            background: rgba(0,0,0,0.04);
+        }
+        [data-theme="light"] .sidebar-link.active {
+            color: var(--accent);
+            background: rgba(37,99,235,0.08);
+        }
+        [data-theme="light"] .sidebar-link.active::before {
+            background: var(--accent);
+        }
+        [data-theme="light"] .sidebar-footer {
+            border-top-color: var(--border-color);
+        }
+
+        [data-theme="light"] .topbar {
+            background: rgba(255,255,255,0.95);
+            border-bottom-color: var(--border-color);
+        }
+        [data-theme="light"] .topbar-page-title {
+            color: var(--text-primary);
+        }
+        [data-theme="light"] .user-dropdown {
+            color: var(--text-secondary);
+        }
+        [data-theme="light"] .user-dropdown:hover {
+            background: rgba(0,0,0,0.04);
+            color: var(--text-primary);
+        }
+        [data-theme="light"] .user-name {
+            color: var(--text-primary);
+        }
+
+        [data-theme="light"] .card {
+            border-color: var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+
+        [data-theme="light"] .glass-panel {
+            background: #ffffff;
+            border-color: var(--border-color);
+        }
+
+        [data-theme="light"] .form-control,
+        [data-theme="light"] .form-select {
+            background-color: #ffffff !important;
+            border-color: #d1d5db !important;
+            color: var(--text-primary) !important;
+        }
+        [data-theme="light"] .form-control::placeholder {
+            color: #94a3b8 !important;
+        }
+        [data-theme="light"] .form-label {
+            color: var(--text-secondary);
+        }
+
+        [data-theme="light"] .table-dark {
+            --bs-table-bg: #ffffff;
+            --bs-table-color: var(--text-primary);
+            --bs-table-border-color: var(--border-color);
+        }
+        [data-theme="light"] .table-dark thead {
+            background: #f8fafc !important;
+        }
+        [data-theme="light"] .table-dark thead th {
+            color: var(--text-secondary);
+            border-bottom-color: var(--border-color);
+        }
+        [data-theme="light"] .table-dark td {
+            border-bottom-color: var(--border-color);
+        }
+        [data-theme="light"] .table-dark tr:hover {
+            background: rgba(0,0,0,0.02) !important;
+        }
+
+        [data-theme="light"] .text-white {
+            color: var(--text-primary) !important;
+        }
+        [data-theme="light"] .text-light {
+            color: var(--text-primary) !important;
+        }
+        [data-theme="light"] .text-secondary {
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="light"] .bg-dark {
+            background-color: #ffffff !important;
+        }
+        [data-theme="light"] .bg-card-bg {
+            background-color: #ffffff !important;
+        }
+        [data-theme="light"] .text-bg-dark {
+            background-color: #f1f5f9 !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="light"] .btn-outline-light {
+            border-color: #d1d5db;
+            color: #374151;
+        }
+        [data-theme="light"] .btn-outline-light:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+        [data-theme="light"] .btn-outline-secondary {
+            color: #374151;
+            border-color: #d1d5db;
+        }
+        [data-theme="light"] .btn-outline-secondary:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        [data-theme="light"] input[type="file"]::file-selector-button {
+            background-color: var(--accent);
+            color: #fff;
+        }
+
+        [data-theme="light"] .badge.border-secondary {
+            border-color: #d1d5db !important;
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="light"] hr {
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="light"] .border-secondary {
+            border-color: #e2e8f0 !important;
+        }
+
+        [data-theme="light"] footer {
+            border-top-color: var(--border-color) !important;
+        }
+        [data-theme="light"] footer h5 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="light"] .navbar-toggler-icon {
+            filter: none !important;
+        }
+        [data-theme="light"] ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        [data-theme="light"] ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+        }
+
+        [data-theme="light"] .alert {
+            border-color: var(--border-color);
+        }
+        [data-theme="light"] .alert-info {
+            background: #eff6ff;
+            color: #1e40af;
+        }
+        [data-theme="light"] .alert-danger {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+        [data-theme="light"] .alert-success {
+            background: #f0fdf4;
+            color: #166534;
+        }
+        [data-theme="light"] .alert-warning {
+            background: #fffbeb;
+            color: #92400e;
+        }
+
+        [data-theme="light"] .list-group-item {
+            background: transparent;
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        [data-theme="light"] .btn-primary {
+            box-shadow: 0 4px 12px rgba(37,99,235,0.2);
+        }
+        [data-theme="light"] .btn-primary:hover {
+            box-shadow: 0 8px 16px rgba(37,99,235,0.3);
+        }
+
+        [data-theme="light"] .btn-danger,
+        [data-theme="light"] .btn-outline-danger {
+            color: var(--danger);
+            border-color: #fca5a5;
+        }
+        [data-theme="light"] .btn-outline-danger:hover {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        [data-theme="light"] .text-danger {
+            color: var(--danger) !important;
+        }
+        [data-theme="light"] .text-success {
+            color: var(--success) !important;
+        }
+        [data-theme="light"] .text-warning {
+            color: var(--warning) !important;
+        }
+        [data-theme="light"] .text-accent {
+            color: var(--accent);
+        }
+
+        [data-theme="light"] .badge-shortlisted {
+            background: rgba(5,150,105,0.1);
+            color: #059669;
+        }
+        [data-theme="light"] .badge-maybe {
+            background: rgba(217,119,6,0.1);
+            color: #b45309;
+        }
+        [data-theme="light"] .badge-rejected {
+            background: rgba(220,38,38,0.1);
+            color: #dc2626;
+        }
+
+        [data-theme="light"] .bg-success {
+            background-color: var(--success) !important;
+        }
+        [data-theme="light"] .bg-danger {
+            background-color: var(--danger) !important;
+        }
+        [data-theme="light"] .bg-warning {
+            background-color: var(--warning) !important;
+        }
+        [data-theme="light"] .bg-primary {
+            background-color: var(--accent) !important;
+        }
+
+        /* ── Light: template-specific hardcoded dark backgrounds ── */
+        [data-theme="light"] .card.bg-transparent {
+            background: var(--card-bg) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+        [data-theme="light"] thead[style*="background"] {
+            background: #f8fafc !important;
+        }
+        [data-theme="light"] thead[style*="background"] th {
+            color: var(--text-secondary) !important;
+        }
+        [data-theme="light"] div[style*="rgba(15,23,42,0.5)"] {
+            background: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+        }
+        [data-theme="light"] div[style*="rgba(30,41,59"] {
+            background: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="light"] div[style*="rgba(15,23,42,0.95)"],
+        [data-theme="light"] div[style*="linear-gradient"][style*="rgba(15,23,42,0.8)"] {
+            background: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="light"] .scan-run-card {
+            background: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="light"] .scan-run-card.is-selected {
+            background: rgba(37,99,235,0.04) !important;
+            border-color: var(--accent) !important;
+        }
+        [data-theme="light"] .cb-box {
+            background: var(--bg-color) !important;
+            border-color: #d1d5db !important;
+        }
+        [data-theme="light"] .bulk-action-inner {
+            background: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="light"] .comparison-section {
+            background: var(--bg-color) !important;
+        }
+        [data-theme="light"] .comparison-card.old {
+            background: rgba(220,38,38,0.04) !important;
+            border-color: rgba(220,38,38,0.15) !important;
+        }
+        [data-theme="light"] .comparison-card.new {
+            background: rgba(5,150,105,0.04) !important;
+            border-color: rgba(5,150,105,0.15) !important;
+        }
+        [data-theme="light"] .cta-box {
+            background: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="light"] div[style*="background:rgba(30,41,59,0.7)"] {
+            background: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="light"] div[style*="background: rgba(30, 41, 59, 0.8)"] {
+            background: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="light"] .step-number {
+            color: rgba(0,0,0,0.03) !important;
+        }
+        [data-theme="light"] .feature-icon-box {
+            background: rgba(37,99,235,0.08) !important;
+            color: var(--accent) !important;
+        }
+
+        [data-theme="light"] .progress.bg-dark {
+            background: #e2e8f0 !important;
+        }
+        [data-theme="light"] .badge.bg-dark {
+            background: #f1f5f9 !important;
+            color: var(--text-primary) !important;
+            border-color: #e2e8f0 !important;
+        }
+        [data-theme="light"] .badge.bg-dark.text-success {
+            background: #f0fdf4 !important;
+            color: var(--success) !important;
+        }
+        [data-theme="light"] .badge.bg-dark.text-danger {
+            background: #fef2f2 !important;
+            color: var(--danger) !important;
+        }
+
+        [data-theme="light"] .form-text.text-white-50 {
+            color: #94a3b8 !important;
+        }
+
+        [data-theme="light"] .p-3.rounded.bg-dark {
+            background: #f8fafc !important;
+            border-color: #e2e8f0 !important;
         }
 
         body {
@@ -32,50 +408,11 @@
             overflow-x: hidden;
         }
 
-        .navbar {
-            background-color: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 1rem 0;
-            z-index: 1000;
-        }
-
-        .navbar-brand {
-            color: var(--accent) !important;
-            font-weight: 700;
-            font-size: 1.5rem;
-            letter-spacing: -0.5px;
-        }
-
-        .nav-link {
-            color: rgba(148,163,184,0.75) !important;
-            font-weight: 500;
-            margin: 0 0.25rem;
-            padding: 0.4rem 0.9rem !important;
-            border-radius: 50px;
-            transition: all 0.2s;
-            position: relative;
-        }
-
-        .nav-link:hover {
-            color: #f8fafc !important;
-            background: rgba(255,255,255,0.06);
-        }
-
-        .nav-link.active {
-            color: #38bdf8 !important;
-            background: rgba(56,189,248,0.12);
-            border: 1px solid rgba(56,189,248,0.25);
-            font-weight: 600;
-            box-shadow: 0 0 12px rgba(56,189,248,0.12);
-        }
-
         .btn-primary {
             background: linear-gradient(135deg, var(--accent), var(--accent-hover));
             border: none;
             padding: 0.6rem 1.5rem;
             border-radius: 50px;
-            /* Pill shape for SaaS feel */
             font-weight: 600;
             box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
             transition: transform 0.2s, box-shadow 0.2s;
@@ -102,11 +439,7 @@
             padding: 2rem;
         }
 
-        h1,
-        h2,
-        h3,
-        h4,
-        h5 {
+        h1, h2, h3, h4, h5 {
             color: var(--text-primary);
             font-weight: 600;
             letter-spacing: -0.02em;
@@ -120,7 +453,6 @@
             color: var(--text-secondary);
         }
 
-        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -153,9 +485,7 @@
             background-color: var(--card-bg) !important;
         }
 
-        /* Premium Form Styles */
-        .form-control,
-        .form-select {
+        .form-control, .form-select {
             background-color: rgba(15, 23, 42, 0.8) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             color: var(--text-primary) !important;
@@ -164,8 +494,7 @@
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .form-control:focus,
-        .form-select:focus {
+        .form-control:focus, .form-select:focus {
             border-color: var(--accent) !important;
             box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15) !important;
             outline: none;
@@ -199,12 +528,431 @@
             cursor: pointer;
             margin-right: 1rem;
         }
+
+        /* ── Marketing Navbar ── */
+        .marketing-navbar {
+            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1rem 0;
+            z-index: 1000;
+        }
+
+        .marketing-navbar .navbar-brand {
+            color: var(--accent) !important;
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .marketing-navbar .nav-link {
+            color: rgba(148,163,184,0.75) !important;
+            font-weight: 500;
+            margin: 0 0.25rem;
+            padding: 0.4rem 0.9rem !important;
+            border-radius: 50px;
+            transition: all 0.2s;
+        }
+
+        .marketing-navbar .nav-link:hover {
+            color: #f8fafc !important;
+            background: rgba(255,255,255,0.06);
+        }
+
+        /* ── Dashboard Sidebar ── */
+        .dashboard-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: rgba(15, 23, 42, 0.95);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            z-index: 1040;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-brand {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .sidebar-brand-icon {
+            width: 34px;
+            height: 34px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-brand-text {
+            color: #f8fafc;
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-brand-text span {
+            color: var(--accent);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 1rem 0.75rem;
+            overflow-y: auto;
+        }
+
+        .sidebar-nav .nav-section-title {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(148, 163, 184, 0.4);
+            padding: 0 0.75rem;
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        .sidebar-nav .nav-section-title:first-child {
+            margin-top: 0;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0.75rem;
+            margin: 0.1rem 0;
+            border-radius: 10px;
+            color: rgba(148, 163, 184, 0.8);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+            position: relative;
+        }
+
+        .sidebar-link:hover {
+            color: #f8fafc;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-link.active {
+            color: var(--accent);
+            background: rgba(56, 189, 248, 0.1);
+            font-weight: 600;
+        }
+
+        .sidebar-link.active::before {
+            content: '';
+            position: absolute;
+            left: -0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .sidebar-link svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            opacity: 0.7;
+        }
+
+        .sidebar-link.active svg {
+            opacity: 1;
+        }
+
+        .sidebar-link:hover svg {
+            opacity: 1;
+        }
+
+        .sidebar-footer {
+            padding: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-footer .sidebar-link {
+            font-size: 0.85rem;
+        }
+
+        .sidebar-footer .sidebar-link.text-danger:hover {
+            color: var(--danger) !important;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* ── Main Content Area ── */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* ── Top Bar ── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 2rem;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            gap: 1rem;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .topbar-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.25rem;
+            cursor: pointer;
+        }
+
+        .topbar-toggle:hover {
+            color: var(--text-primary);
+        }
+
+        .topbar-page-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.15s;
+            text-decoration: none;
+            color: var(--text-secondary);
+            border: none;
+            background: none;
+        }
+
+        .user-dropdown:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .user-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .user-role {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* ── Dashboard Content ── */
+        .dashboard-content {
+            flex: 1;
+            padding: 1.5rem 2rem;
+        }
+
+        /* ── Mobile overlay ── */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1035;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .topbar-toggle {
+                display: block;
+            }
+
+            .topbar-page-title {
+                display: none;
+            }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .topbar {
+                padding: 0.75rem 1rem;
+            }
+
+            .dashboard-content {
+                padding: 1rem;
+            }
+
+            .user-name, .user-role {
+                display: none;
+            }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg sticky-top">
+    {% if user.is_authenticated %}
+    <!-- ── Dashboard Layout ── -->
+    <div class="dashboard-wrapper">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <a href="{% url 'bulk_upload' %}" class="sidebar-brand">
+                <div class="sidebar-brand-icon">
+                    <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                    </svg>
+                </div>
+                <span class="sidebar-brand-text"><span>AI</span>Recruiter</span>
+            </a>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Main</div>
+                <a href="{% url 'bulk_upload' %}"
+                   class="sidebar-link {% if request.resolver_match.url_name == 'bulk_upload' %}active{% endif %}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                    </svg>
+                    Bulk Upload
+                </a>
+                <a href="{% url 'match_stored' %}"
+                   class="sidebar-link {% if request.resolver_match.url_name == 'match_stored' %}active{% endif %}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Match Stored
+                </a>
+                <a href="{% url 'scan_history' %}"
+                   class="sidebar-link {% if request.resolver_match.url_name == 'scan_history' %}active{% endif %}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    Scan History
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="sidebar-link text-danger" style="width:100%;border:none;background:none;cursor:pointer;display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.75rem;border-radius:10px;font-weight:500;font-size:0.9rem;transition:all 0.15s;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                        </svg>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="topbar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M3 12h18M3 6h18M3 18h18"/>
+                        </svg>
+                    </button>
+                    <div class="topbar-page-title">
+                        {% block page_title %}{% endblock %}
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <button id="themeToggle" class="user-dropdown" type="button" aria-label="Toggle theme" style="cursor:pointer;padding:0.4rem;border-radius:8px;">
+                        <svg id="themeIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+                        </svg>
+                    </button>
+                    <div class="user-dropdown" onclick="document.getElementById('logoutForm').submit();" role="button">
+                        <div class="user-avatar">
+                            {{ user.first_name|first|upper|default:user.username|first|upper }}
+                        </div>
+                        <div class="d-none d-sm-block">
+                            <div class="user-name">{{ user.first_name|default:user.username }}</div>
+                            <div class="user-role">Recruiter</div>
+                        </div>
+                    </div>
+                    <form method="post" action="{% url 'logout' %}" id="logoutForm" style="display:none;">
+                        {% csrf_token %}
+                    </form>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+    {% else %}
+    <!-- ── Marketing Layout ── -->
+    <nav class="navbar navbar-expand-lg marketing-navbar sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
                 <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center"
@@ -220,38 +968,24 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto align-items-center">
-                    {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'bulk_upload' %}active{% endif %}"
-                           href="{% url 'bulk_upload' %}">Bulk Upload</a>
+                        <a class="nav-link" href="{% url 'home' %}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'match_stored' %}active{% endif %}"
-                           href="{% url 'match_stored' %}">Match Stored</a>
+                        <a class="nav-link" href="{% url 'pricing' %}">Pricing</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'scan_history' %}active{% endif %}"
-                           href="{% url 'scan_history' %}">Scan History</a>
-                    </li>
-                    {% endif %}
                 </ul>
                 <div class="d-flex gap-2">
-                    {% if user.is_authenticated %}
-                    <form method="post" action="{% url 'logout' %}" style="display: inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-link text-secondary text-decoration-none">Logout</button>
-                    </form>
-                    {% else %}
                     <a class="btn btn-link text-secondary text-decoration-none" href="{% url 'login' %}">Sign In</a>
-                    <a class="btn btn-primary rounded-pill px-4 text-white hover-lift" href="{% url 'signup' %}">Sign
-                        Up</a>
-                    {% endif %}
+                    <a class="btn btn-primary rounded-pill px-4 text-white" href="{% url 'signup' %}">Sign Up</a>
                 </div>
             </div>
         </div>
     </nav>
 
     <div class="container py-5">
+    {% endif %}
+
         {% if messages %}
         {% for message in messages %}
         <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -262,9 +996,68 @@
         {% endif %}
 
         {% block content %}{% endblock %}
+
+    {% if user.is_authenticated %}
+            </div>
+        </div>
     </div>
 
-    <!-- Footer -->
+    <script>
+    (function() {
+        var toggle = document.getElementById('sidebarToggle');
+        var sidebar = document.getElementById('sidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+        if (toggle && sidebar && overlay) {
+            function openSidebar() {
+                sidebar.classList.add('open');
+                overlay.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+            toggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (sidebar.classList.contains('open')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            });
+            overlay.addEventListener('click', closeSidebar);
+        }
+
+        var themeToggle = document.getElementById('themeToggle');
+        var themeIcon = document.getElementById('themeIcon');
+        if (themeToggle) {
+            function setTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+                if (themeIcon) {
+                    if (theme === 'light') {
+                        themeIcon.innerHTML = '<path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>';
+                    } else {
+                        themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+                    }
+                }
+            }
+            var saved = localStorage.getItem('theme');
+            if (!saved) {
+                saved = 'dark';
+            }
+            setTheme(saved);
+            themeToggle.addEventListener('click', function() {
+                var current = document.documentElement.getAttribute('data-theme');
+                setTheme(current === 'light' ? 'dark' : 'light');
+            });
+        }
+    })();
+    </script>
+    {% else %}
+    </div>
+
     <footer class="border-top border-secondary border-opacity-10 py-5 mt-5">
         <div class="container text-center">
             <div class="row justify-content-center">
@@ -284,6 +1077,7 @@
             </div>
         </div>
     </footer>
+    {% endif %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

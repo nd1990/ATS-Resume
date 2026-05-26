@@ -3,6 +3,8 @@
 {% block content %}
 
 {# ── Bulk delete form wraps everything ── #}
+<div class="row">
+    <div class="col-lg-11 mx-auto">
 <form method="post" action="{% url 'bulk_delete_scan_runs' %}" id="bulk-delete-form">
     {% csrf_token %}
 
@@ -15,15 +17,15 @@
         </div>
         <div class="d-flex gap-2 align-items-center flex-wrap">
             {% if grouped_list %}
-            <button type="button" class="btn btn-outline-secondary rounded-pill btn-sm" id="select-all-btn"
+            <button type="button" class="btn btn-outline-secondary rounded-pill btn-sm py-2 px-3" id="select-all-btn"
                 onclick="selectAll()">
                 &#9745; Select All
             </button>
-            <button type="button" class="btn btn-outline-secondary rounded-pill btn-sm" id="deselect-all-btn"
+            <button type="button" class="btn btn-outline-secondary rounded-pill btn-sm py-2" id="deselect-all-btn"
                 onclick="deselectAll()" style="display:none;">
                 &#9744; Deselect All
             </button>
-            <button type="button" class="btn-delete-all rounded-pill btn-sm" onclick="deleteAll()">
+            <button type="button" class="btn-delete-all rounded-pill btn-sm py-2" onclick="deleteAll()">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
                     style="margin-right:5px;vertical-align:-2px;">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -116,19 +118,7 @@
                                 {% endif %}
                             </div>
 
-                            {# Right: Top Candidate + Actions #}
                             <div class="d-flex align-items-center gap-3 flex-wrap">
-                                {% if item.top_candidate %}
-                                <div class="top-candidate-pill">
-                                    <span class="top-star">&#11088;</span>
-                                    <span class="top-name">{{ item.top_candidate.candidate_name }}</span>
-                                    <span
-                                        class="top-score
-                                        {% if item.top_candidate.final_weighted_score >= 80 %}text-success{% elif item.top_candidate.final_weighted_score >= 55 %}text-warning{% else %}text-danger{% endif %}">
-                                        {{ item.top_candidate.final_weighted_score }}%
-                                    </span>
-                                </div>
-                                {% endif %}
                                 <a href="{% url 'filter_results' item.run.pk %}"
                                     class="btn btn-sm btn-primary rounded-pill px-3">
                                     View Results
@@ -191,7 +181,8 @@
         </div>
     </div>
 </div>
-
+</div>
+</div>
 <style>
     /* ── Checkbox ── */
     .cb-wrapper {
@@ -355,37 +346,6 @@
         font-size: 1.4rem;
         font-weight: 800;
         line-height: 1;
-    }
-
-    /* ── Top Candidate ── */
-    .top-candidate-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        background: rgba(245, 158, 11, 0.08);
-        border: 1px solid rgba(245, 158, 11, 0.2);
-        border-radius: 20px;
-        padding: 0.3rem 0.9rem;
-        font-size: 0.82rem;
-    }
-
-    .top-star {
-        color: #f59e0b;
-        font-size: 0.85rem;
-    }
-
-    .top-name {
-        color: #f8fafc;
-        font-weight: 600;
-        max-width: 150px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .top-score {
-        font-weight: 700;
-        margin-left: 0.2rem;
     }
 
     .empty-icon {

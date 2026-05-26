@@ -1221,11 +1221,18 @@ def verify_nursing_credentials(jd_text, resume_text):
         },
         'rto': {
             'conflicts': '',
+            'start_date': '',
+            'end_date': '',
         },
         'nursys_verified': False,
         'credentialmydoc_verified': False,
         'symplr_verified': False,
+        'is_nursing_jd': False,
     }
+
+    # ── Determine if JD is nursing-related ──
+    nursing_keywords_in_jd = ['rn', 'registered nurse', 'nursing', 'nurse', 'bls', 'acls', 'nihss', 'pals']
+    nursing['is_nursing_jd'] = any(kw in jd_lower for kw in nursing_keywords_in_jd)
 
     # ── License detection ──
     for pat in NURSING_LICENSE_PATTERNS:
@@ -1294,8 +1301,25 @@ def verify_nursing_credentials(jd_text, resume_text):
     # ── Start date / RTO ──
     if re.search(r'start\s*date|available\s*(?:immediately)?|availability', resume_lower):
         nursing['start_date']['details'] = 'Start date mentioned in resume.'
-    if re.search(r'rto|requested\s*time\s*off|time\s*off\s*requested', resume_lower):
-        nursing['rto']['conflicts'] = 'RTO mentioned in resume.'
+
+    # Extract RTO details — grab the text after the RTO label
+    rto_section = re.search(
+        r'(?:rto|requested\s*time\s*off|time\s*off\s*requested)\s*[:;]\s*(.+?)(?:\n|\.|$)',
+        resume_lower
+    )
+    if rto_section:
+        raw = rto_section.group(1).strip()
+        # Try to extract date range (MM/DD/YYYY or similar)
+        dates = re.findall(r'\d{1,2}[/\-\.]\d{1,2}[/\-\.]\d{2,4}', raw)
+        if len(dates) >= 2:
+            nursing['rto']['start_date'] = dates[0]
+            nursing['rto']['end_date'] = dates[1]
+            nursing['rto']['conflicts'] = f"RTO: {dates[0]} to {dates[1]}"
+        else:
+            nursing['rto']['conflicts'] = f"RTO: {raw}"
+        nursing['start_date']['conflict'] = True
+    elif re.search(r'rto|requested\s*time\s*off|time\s*off\s*requested', resume_lower):
+        nursing['rto']['conflicts'] = 'RTO mentioned in resume (no dates extracted).'
         nursing['start_date']['conflict'] = True
 
     return nursing
@@ -1373,7 +1397,10 @@ def generate_improvement_suggestions(
     # Nursing-specific suggestions
     if nursing_compliance:
         nc = nursing_compliance
-        if nc.get('license', {}).get('status') == 'unchecked':
+        any_nursing_in_jd = any(
+            c.get('jd_requires') for c in nc.get('certifications', {}).values()
+        )
+        if nc.get('license', {}).get('status') == 'unchecked' and any_nursing_in_jd:
             suggestions.append("Nursing license not verified. Run Nursys/CredentialMyDoc check.")
         for cert_name, cert_data in nc.get('certifications', {}).items():
             if cert_data.get('jd_requires') and not cert_data.get('present'):
@@ -1416,7 +1443,10 @@ def compute_final_score_and_recommendation(
     # Nursing compliance penalty
     if nursing_compliance:
         nc = nursing_compliance
-        if nc.get('license', {}).get('status') == 'unchecked':
+        any_nursing_in_jd = any(
+            c.get('jd_requires') for c in nc.get('certifications', {}).values()
+        )
+        if nc.get('license', {}).get('status') == 'unchecked' and any_nursing_in_jd:
             penalty += 5
         missing_nursing_certs = sum(
             1 for c in nc.get('certifications', {}).values()
@@ -1431,7 +1461,10 @@ def compute_final_score_and_recommendation(
     nursing_ok = True
     if nursing_compliance:
         nc = nursing_compliance
-        nursing_ok = (
+        any_nursing_in_jd = any(
+            c.get('jd_requires') for c in nc.get('certifications', {}).values()
+        )
+        nursing_ok = not any_nursing_in_jd or (
             nc.get('license', {}).get('status') != 'unchecked'
             and nc.get('sanctions', {}).get('clear', True)
         )
@@ -1463,12 +1496,16 @@ def compute_qa_grade_and_verdict(
     nursing_note = ""
     if nursing_compliance:
         nc = nursing_compliance
-        lic_ok = nc.get('license', {}).get('status') != 'unchecked'
-        sanctions_ok = nc.get('sanctions', {}).get('clear', True)
-        if not lic_ok:
-            nursing_note = " License not verified."
-        elif not sanctions_ok:
-            nursing_note = " Sanctions check triggered."
+        any_nursing_in_jd = any(
+            c.get('jd_requires') for c in nc.get('certifications', {}).values()
+        )
+        if any_nursing_in_jd:
+            lic_ok = nc.get('license', {}).get('status') != 'unchecked'
+            sanctions_ok = nc.get('sanctions', {}).get('clear', True)
+            if not lic_ok:
+                nursing_note = " License not verified."
+            elif not sanctions_ok:
+                nursing_note = " Sanctions check triggered."
 
     if final_score >= 80 and compliance_count == 0 and risk_count == 0:
         grade = ""

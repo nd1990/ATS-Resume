@@ -235,8 +235,10 @@
                             {% else %}
                             <div class="small text-secondary-c mb-1">&#8212; Start date not mentioned</div>
                             {% endif %}
-                            {% if nc.rto.conflicts %}
-                            <div class="small text-warning mb-1">&#9888; RTO: {{ nc.rto.conflicts }}</div>
+                            {% if nc.rto.start_date %}
+                            <div class="small text-warning mb-1">&#9888; RTO: {{ nc.rto.start_date }} &rarr; {{ nc.rto.end_date }}</div>
+                            {% elif nc.rto.conflicts %}
+                            <div class="small text-warning mb-1">&#9888; {{ nc.rto.conflicts }}</div>
                             {% else %}
                             <div class="small text-success mb-1">&#10003; No RTO conflicts</div>
                             {% endif %}
@@ -252,18 +254,6 @@
                             {% endif %}
                         </div>
                     </div>
-                </div>
-                {# Verification tools row #}
-                <div class="d-flex gap-2 mt-3 flex-wrap">
-                    <span class="small px-2 py-1 rounded" style="background:rgba(255,255,255,0.05); color:#94a3b8; border:1px solid rgba(255,255,255,0.08);">
-                        <span style="opacity:{% if nc.nursys_verified %}1{% else %}0.4{% endif %};">&#128274; Nursys</span>
-                    </span>
-                    <span class="small px-2 py-1 rounded" style="background:rgba(255,255,255,0.05); color:#94a3b8; border:1px solid rgba(255,255,255,0.08);">
-                        <span style="opacity:{% if nc.credentialmydoc_verified %}1{% else %}0.4{% endif %};">&#128274; CredentialMyDoc</span>
-                    </span>
-                    <span class="small px-2 py-1 rounded" style="background:rgba(255,255,255,0.05); color:#94a3b8; border:1px solid rgba(255,255,255,0.08);">
-                        <span style="opacity:{% if nc.symplr_verified %}1{% else %}0.4{% endif %};">&#128274; Symplr</span>
-                    </span>
                 </div>
             </div>
         </div>
