@@ -22,3 +22,10 @@ def job_detail(request, pk):
     job = get_object_or_404(JobRequirement, pk=pk)
     scores = job.scores.all().select_related('resume').order_by('-match_percentage')
     return render(request, 'jobs/job_detail.html', {'job': job, 'scores': scores})
+
+@login_required
+def job_delete(request, pk):
+    job = get_object_or_404(JobRequirement, pk=pk)
+    if request.method == 'POST':
+        job.delete()
+    return redirect(request.POST.get('next', 'job_list'))

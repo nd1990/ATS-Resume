@@ -28,6 +28,16 @@
                                 {% endfor %}
                             </select>
                         </div>
+                        {% if saved_jds %}
+                        <div class="mt-2 d-flex flex-wrap gap-2">
+                            {% for jd in saved_jds %}
+                            <div class="d-inline-flex align-items-center gap-1 small bg-dark rounded px-2 py-1 border border-secondary border-opacity-25">
+                                <span class="text-secondary-c">{{ jd.title }}</span>
+                                <button type="button" class="btn btn-sm p-0 text-danger border-0 bg-transparent" title="Delete {{ jd.title }}" style="line-height:1;" onclick="deleteSavedJD({{ jd.pk }}, '{{ jd.title|escapejs }}')">&#10005;</button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
 
                     <div class="text-secondary-c text-center small mb-3">&#8212; OR enter a new JD &#8212;</div>
@@ -505,6 +515,7 @@
     var EXTRACT_URL = '{% url "extract_jd_title_ajax" %}';
     var FETCH_JD_URL = '{% url "fetch_jd_by_id_ajax" %}';
     var FETCH_JD_FROM_URL = '{% url "fetch_jd_from_url_ajax" %}';
+    var DELETE_JD_URL = '{% url "job_delete" 0 %}'.replace('/0/', '/');
     var _titleAutoFilled = false;
     var _pasteTimer;
     var _fetchedJDText = '';        // stores last fetched JD from Job ID
@@ -802,6 +813,15 @@
                 switchJDTab('paste');
             })
             .catch(function () {});
+    }
+
+    // ── Delete Saved JD ──────────────────────────────────────────────────────
+    function deleteSavedJD(pk, title) {
+        if (!confirm('Delete saved JD "' + title + '"?')) return;
+        fetch(DELETE_JD_URL + pk + '/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF_TOKEN }
+        }).then(function () { location.reload(); }).catch(function () { location.reload(); });
     }
 
     // ── Scan Loader ───────────────────────────────────────────────────────────
